@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+{% set heading = post.title if post else "Nueva publicación" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+  <h1>{{ heading }}</h1>
+  {% if post %}{% include "admin/_post_meta.html" %}{% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('save_post', post_id=post.id) if post else url_for('create_post') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="title">Título</label>
+    <input id="title" name="title" type="text" value="{{ form.title }}" required>
+    <label for="slug">Enlace</label>
+    <input id="slug" name="slug" type="text" value="{{ form.slug }}" placeholder="Se crea a partir del título" aria-describedby="slug-help">
+    <p id="slug-help" class="help">Solo letras minúsculas, números y guiones. Puedes cambiarlo hasta que el líder la publique por primera vez; después queda fijo para que los enlaces compartidos sigan funcionando.</p>
+    <label for="topic">Tema</label>
+    <select id="topic" name="topic" required>
+      <option value="">Elige un tema</option>
+      {% for key, name in topics.items() %}
+      <option value="{{ key }}"{% if form.topic == key %} selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <label for="body">Texto (Markdown)</label>
+    <textarea id="body" name="body" rows="14">{{ form.body }}</textarea>
+    <div class="actions">
+      <button class="primary" type="submit">{{ "Guardar borrador" if not post or post.status == "draft" else "Guardar cambios" }}</button>
+      <button type="submit" formaction="{{ url_for('preview_post', post_id=post.id) if post else url_for('preview_new_post') }}">Vista previa</button>
+      {% if post %}<a class="danger" href="{{ url_for('confirm_delete_post', post_id=post.id) }}">Borrar</a>{% endif %}
+    </div>
+  </form>
+  {% if preview_html is defined %}
+  <section class="preview" aria-label="Vista previa">
+    <h2>Vista previa</h2>
+    <p class="help">Así lo verán los lectores. Todavía no se ha guardado.</p>
+    <div class="preview-body">{{ preview_html | safe }}</div>
+  </section>
+  {% endif %}
+{% endblock %}

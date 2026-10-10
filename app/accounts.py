@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
+
+from app import db
 
 _hasher = PasswordHasher()
 
@@ -27,10 +28,6 @@ class User:
         return self.role == "admin"
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
 def _user_from_row(row: sqlite3.Row) -> User:
     return User(id=row["id"], email=row["email"], nickname=row["nickname"],
                 role=row["role"], active=bool(row["active"]))
@@ -38,7 +35,7 @@ def _user_from_row(row: sqlite3.Row) -> User:
 
 def create_user(conn: sqlite3.Connection, *, email: str, password: str, role: str,
                 nickname: str | None = None, active: bool = True) -> User:
-    now = _now()
+    now = db.now()
     with conn:
         cursor = conn.execute(
             "INSERT INTO users (email, password_hash, nickname, role, active,"

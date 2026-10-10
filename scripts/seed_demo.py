@@ -3,7 +3,8 @@
 
     uv run python scripts/seed_demo.py
 
-Wipes the database at CMS_DATABASE and creates the leader and two members.
+Wipes the database at CMS_DATABASE and creates the leader, two members, and a
+member's draft post.
 Passwords come from CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD (read from .env,
 or from .env.example on a fresh clone); they are never printed.
 """
@@ -13,7 +14,8 @@ import os
 import sys
 from contextlib import closing
 
-from app import accounts, db, settings
+from app import accounts, content, db, settings
+from app.content import PostFields
 
 # (email, nickname, role, environment variable holding the password).
 # tests/conftest.py uses the same emails and nicknames.
@@ -22,6 +24,19 @@ DEMO_USERS = [
     ("ana@albiazul.example", "Rayada de Corazón", "editor", "CMS_EDITOR_PASSWORD"),
     ("beto@albiazul.example", "Furia del Cerro", "editor", "CMS_EDITOR_PASSWORD"),
 ]
+
+# A post its member is still writing (written by ana@).
+DRAFT = PostFields(
+    title="Lo que se vio desde la cabecera norte",
+    topic="match",
+    body=(
+        "Todavía lo estoy escribiendo, pero va la idea:\n\n"
+        "- El primer tiempo fue **puro Rayados**.\n"
+        "- En el segundo nos faltó *cerrar el partido*.\n\n"
+        "> Aquí se viene a alentar, no a sufrir. (Mi tío, cada sábado.)\n\n"
+        "Mañana le agrego lo del gol del triunfo.\n"
+    ),
+)
 
 
 def main() -> int:
@@ -34,13 +49,15 @@ def main() -> int:
     path.unlink(missing_ok=True)
     db.init(path)
     with closing(db.connect(path)) as conn:
-        for email, nickname, role, var in DEMO_USERS:
-            accounts.create_user(conn, email=email, password=os.environ[var],
-                                 role=role, nickname=nickname)
+        users = {email: accounts.create_user(conn, email=email, password=os.environ[var],
+                                             role=role, nickname=nickname)
+                 for email, nickname, role, var in DEMO_USERS}
+        content.create_post(conn, users["ana@albiazul.example"], DRAFT)
 
     print(f"Rebuilt {path} with these demo accounts:")
     for email, nickname, role, var in DEMO_USERS:
         print(f"  {email:<26} {role:<7} {nickname}  (password: ${var})")
+    print(f"and one draft post: {DRAFT.title}")
     return 0
 
 

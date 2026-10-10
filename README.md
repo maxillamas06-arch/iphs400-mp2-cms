@@ -26,6 +26,8 @@ Demo accounts (all fictional; passwords are the values in `.env`):
 | `ana@albiazul.example` | member (editor) | Rayada de Corazón | `CMS_EDITOR_PASSWORD` |
 | `beto@albiazul.example` | member (editor) | Furia del Cerro | `CMS_EDITOR_PASSWORD` |
 
+The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*).
+
 ## What is here
 
 ```text

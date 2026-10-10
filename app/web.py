@@ -4,6 +4,7 @@ from __future__ import annotations
 import secrets
 import sqlite3
 from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, Request
 from fastapi.templating import Jinja2Templates
@@ -12,6 +13,17 @@ from app import accounts, db, policy, settings
 from app.accounts import User
 
 templates = Jinja2Templates(directory=str(settings.TEMPLATES))
+
+# Monterrey keeps a fixed UTC-6 offset, so no time-zone database is needed.
+MONTERREY = timezone(timedelta(hours=-6))
+
+
+def monterrey_time(stored: str) -> str:
+    """A stored UTC timestamp as Monterrey time: 04/10/2026 12:30."""
+    return datetime.fromisoformat(stored).astimezone(MONTERREY).strftime("%d/%m/%Y %H:%M")
+
+
+templates.env.filters["monterrey_time"] = monterrey_time
 
 
 class LoginRequired(Exception):
@@ -23,7 +35,18 @@ class CsrfRejected(Exception):
 
 
 class Forbidden(Exception):
-    """Raised when a signed-in user may not do this; answered with the refusal page."""
+    """Raised when a signed-in user may not do this; answered with the refusal page,
+    which gives the reason."""
+
+    def __init__(self, user: User,
+                 reason: str = "Esta pantalla es solo para el líder del club de aficionados.",
+                 ) -> None:
+        self.user = user
+        self.reason = reason
+
+
+class NotFound(Exception):
+    """Raised for an unknown id; answered with a Spanish 404 page."""
 
     def __init__(self, user: User) -> None:
         self.user = user
@@ -70,9 +93,15 @@ def signed_in_user(request: Request, conn: sqlite3.Connection = Depends(get_db))
     return user
 
 
+def flash(request: Request, message: str) -> None:
+    """Show this message on the next page rendered for this session, once."""
+    request.session["flash"] = message
+
+
 def render(request: Request, name: str, user: User | None = None,
            status_code: int = 200, **context):
     return templates.TemplateResponse(
-        request, name, {"site_title": settings.SITE_TITLE, "user": user, **context},
+        request, name, {"site_title": settings.SITE_TITLE, "user": user,
+                        "message": request.session.pop("flash", None), **context},
         status_code=status_code,
     )

@@ -4,22 +4,13 @@ Each test name says which acceptance criterion of #2 it covers.
 """
 from __future__ import annotations
 
-import re
-
 import pytest
 
 from app.policy import LEADER_ONLY_ROUTES
 
 
-def cells(html: str) -> list[list[str]]:
-    """The text of each table row's cells, as a reader sees them."""
-    rows = re.findall(r"<tr>(.*?)</tr>", html, re.S)
-    return [[re.sub(r"<[^>]+>|\s+", " ", c).strip()
-             for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)] for row in rows]
-
-
 def test_leader_sees_list_of_accounts_with_email_nickname_role_and_active(
-        client_as, demo_users, inactive_user):
+        client_as, demo_users, inactive_user, cells):
     response = client_as("admin").get("/admin/users")
 
     assert response.status_code == 200

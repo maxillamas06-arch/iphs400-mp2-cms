@@ -34,9 +34,17 @@ _Avoid_: Visitor, user, subscriber
 
 ### Content
 
-**Post**:
-A fan's opinion about the team, written by a member (or the leader) and filed under exactly one topic.
-_Avoid_: Article, story, news item, entry
+**Post** (*Publicación*):
+A fan's opinion about the team, written by a member (or the leader) and filed under exactly one topic. In Spanish, *publicación* is always the thing, never the act: for the act say *publicar*.
+_Avoid_: Article, story, news item, entry; "la publicación de …" to mean publishing
+
+**Slug** (*Enlace*):
+The end of a post's web address, made from its title (`crónica-del-clásico-regio`). It can be changed until the post is first published, then never, so links shared on X or Facebook keep working.
+_Avoid_: URL, permalink, path
+
+**Preview** (*Vista previa*):
+A post's Markdown shown exactly as readers will see it, sanitized, without saving anything.
+_Avoid_: Draft view, render
 
 **Topic**:
 The one fixed subject a post is filed under: **Match** (*Partido*), **Lineup** (*Alineación*), **Coach** (*Técnico*), **Signings** (*Fichajes*), or **Fan club news** (*Noticias del club de aficionados*). Readers see the Spanish names. The list is fixed; members cannot add topics.
@@ -56,15 +64,15 @@ _Avoid_: Legal notice, footer (the footer is where it sits, not what it is)
 
 ### Post lifecycle
 
-**Draft**:
+**Draft** (*Borrador*):
 A post its member is still writing. Never public.
 _Avoid_: Unpublished (too broad), saved
 
-**Submitted**:
+**Submitted** (*Enviada*):
 A post its member has finished and handed to the leader for checking. Never public.
 _Avoid_: Pending, in review, ready
 
-**Published**:
+**Published** (*Publicada*):
 A post the leader has approved. The only status that can appear on the public site.
 _Avoid_: Live, approved, public
 

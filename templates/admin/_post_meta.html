@@ -1,0 +1,5 @@
+<p class="meta">
+  {{ post.topic_name }} · {{ post.status_name }} · de {{ post.author_nickname or "—" }} ·
+  Creada: {{ post.created_at | monterrey_time }} ·
+  Última actualización: {{ post.updated_at | monterrey_time }}
+</p>

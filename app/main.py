@@ -12,9 +12,9 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import db, settings
-from app.routes import auth, dashboard, users
-from app.web import (CsrfRejected, Forbidden, LoginRequired, render, require_csrf,
-                     templates)
+from app.routes import auth, dashboard, posts, users
+from app.web import (CsrfRejected, Forbidden, LoginRequired, NotFound, render,
+                     require_csrf, templates)
 
 
 def create_app(database_path: Path | None = None) -> FastAPI:
@@ -37,10 +37,16 @@ def create_app(database_path: Path | None = None) -> FastAPI:
 
     @app.exception_handler(Forbidden)
     def refuse(request: Request, exc: Forbidden):
-        return render(request, "admin/forbidden.html", exc.user, status_code=403)
+        return render(request, "admin/forbidden.html", exc.user, status_code=403,
+                      reason=exc.reason)
+
+    @app.exception_handler(NotFound)
+    def not_found(request: Request, exc: NotFound):
+        return render(request, "admin/not_found.html", exc.user, status_code=404)
 
     app.include_router(auth.router)
     app.include_router(dashboard.router)
+    app.include_router(posts.router)
     app.include_router(users.router)
 
     @app.get("/")

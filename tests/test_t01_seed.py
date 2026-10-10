@@ -4,46 +4,24 @@ Each test name says which acceptance criterion of #2 it covers.
 """
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
 from app import accounts, db, settings
 from app.main import create_app
 
-ROOT = Path(__file__).resolve().parents[1]
 
-
-def env_example() -> dict[str, str]:
-    pairs = (line.split("=", 1) for line in (ROOT / ".env.example").read_text().splitlines()
-             if line.strip() and not line.startswith("#"))
-    return {key.strip(): value.strip() for key, value in pairs}
-
-
-def run_seed(database: Path) -> subprocess.CompletedProcess:
-    env = {k: v for k, v in os.environ.items() if not k.startswith("CMS_")}
-    env |= env_example() | {"CMS_DATABASE": str(database)}
-    return subprocess.run([sys.executable, "scripts/seed_demo.py"], cwd=ROOT, env=env,
-                          capture_output=True, text=True)
-
-
-def test_env_example_sets_site_title_and_student_placeholder():
-    values = env_example()
-
-    assert values["CMS_SITE_TITLE"] == "Club de Aficionados Albiazul"
-    assert values["CMS_STUDENT"] == "first-last"
+def test_env_example_sets_site_title_and_student_placeholder(env_example):
+    assert env_example["CMS_SITE_TITLE"] == "Club de Aficionados Albiazul"
+    assert env_example["CMS_STUDENT"] == "first-last"
 
 
 def test_seed_runs_clean_from_env_example_and_its_users_log_in_by_nickname(
-        tmp_path, login, demo_users):
+        tmp_path, login, demo_users, env_example, run_seed):
     database = tmp_path / "seeded.db"
-    passwords = {"admin": env_example()["CMS_ADMIN_PASSWORD"],
-                 "editor": env_example()["CMS_EDITOR_PASSWORD"],
-                 "editor2": env_example()["CMS_EDITOR_PASSWORD"]}
+    passwords = {"admin": env_example["CMS_ADMIN_PASSWORD"],
+                 "editor": env_example["CMS_EDITOR_PASSWORD"],
+                 "editor2": env_example["CMS_EDITOR_PASSWORD"]}
 
     for _ in range(2):  # the seed wipes and rebuilds, so a second run is clean too
         result = run_seed(database)
@@ -57,11 +35,11 @@ def test_seed_runs_clean_from_env_example_and_its_users_log_in_by_nickname(
 
 
 def test_seed_creates_the_leader_and_two_members_matching_the_test_helper(
-        tmp_path, login, demo_users):
+        tmp_path, login, demo_users, env_example, run_seed):
     database = tmp_path / "seeded.db"
     assert run_seed(database).returncode == 0
     leader = TestClient(create_app(database))
-    login(leader, "lider@albiazul.example", env_example()["CMS_ADMIN_PASSWORD"])
+    login(leader, "lider@albiazul.example", env_example["CMS_ADMIN_PASSWORD"])
 
     page = leader.get("/admin/users").text
 

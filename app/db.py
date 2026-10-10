@@ -1,8 +1,9 @@
-"""SQLite storage: the schema, and one connection per request."""
+"""SQLite storage: the schema, one connection per request, and the clock."""
 from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 
 SCHEMA = """
@@ -16,7 +17,27 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TEXT    NOT NULL,
     updated_at    TEXT    NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS posts (
+    id                 INTEGER PRIMARY KEY,
+    title              TEXT    NOT NULL,
+    slug               TEXT    NOT NULL UNIQUE,
+    body               TEXT    NOT NULL,
+    topic              TEXT    NOT NULL,
+    status             TEXT    NOT NULL DEFAULT 'draft'
+                               CHECK (status IN ('draft', 'submitted', 'published')),
+    author_id          INTEGER NOT NULL REFERENCES users (id),
+    created_at         TEXT    NOT NULL,
+    updated_at         TEXT    NOT NULL,
+    first_published_at TEXT,   -- set once, never cleared; locks the slug
+    edited_at          TEXT    -- edited after publishing: "Actualizado el …"
+);
 """
+
+
+def now() -> str:
+    """The current time in UTC, as stored in every timestamp column."""
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def connect(path: Path) -> sqlite3.Connection:

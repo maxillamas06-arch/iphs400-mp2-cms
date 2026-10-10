@@ -13,7 +13,10 @@ the way a browser would.
 """
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -34,6 +37,7 @@ DEMO_USERS = {
                 "nickname": "Furia del Cerro", "role": "editor"},
 }
 
+ROOT = Path(__file__).resolve().parents[1]
 CSRF_FIELD = re.compile(r'name="csrf_token" value="([^"]+)"')
 PATH_PARAM = re.compile(r"\{[^}]+\}")
 
@@ -117,6 +121,34 @@ def client_as(database_path: Path, login):
 
 
 @pytest.fixture
+def clock(monkeypatch):
+    """The time the app records, fixed until a test moves it:
+    clock.time = "2026-10-05T01:00:00+00:00"."""
+
+    class Clock:
+        time = "2026-10-04T18:30:00+00:00"  # 12:30 in Monterrey
+
+    fixed = Clock()
+    monkeypatch.setattr(db, "now", lambda: fixed.time)
+    return fixed
+
+
+@pytest.fixture
+def write_post(csrf_token):
+    """Return a function: write_post(client, title=..., topic=..., body=..., slug=...)
+    -> the (unfollowed) response to creating that post with the editor's form."""
+
+    def _write(c: TestClient, title: str = "Crónica del Clásico Regio", topic: str = "match",
+               body: str = "Ganamos **3-1** en casa.", slug: str = ""):
+        return c.post("/admin/posts/new",
+                      data={"csrf_token": csrf_token(c), "title": title, "topic": topic,
+                            "body": body, "slug": slug},
+                      follow_redirects=False)
+
+    return _write
+
+
+@pytest.fixture
 def routes():
     """Return a function: routes(client, method) -> [(name, path), ...] for every
     app route answering that method, with path parameters filled in as 1.
@@ -141,3 +173,39 @@ def redirects_to_login():
                 and response.headers["location"].endswith("/login"))
 
     return _check
+
+
+@pytest.fixture
+def cells():
+    """Return a function: cells(html) -> the text of each table row's cells, as a
+    reader sees them (a header row gives [])."""
+
+    def _cells(html: str) -> list[list[str]]:
+        rows = re.findall(r"<tr>(.*?)</tr>", html, re.S)
+        return [[re.sub(r"<[^>]+>|\s+", " ", c).strip()
+                 for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)] for row in rows]
+
+    return _cells
+
+
+@pytest.fixture
+def env_example() -> dict[str, str]:
+    """The values in .env.example, read here rather than through app.settings so
+    the expected values do not come from the code under test."""
+    pairs = (line.split("=", 1) for line in (ROOT / ".env.example").read_text().splitlines()
+             if line.strip() and not line.startswith("#"))
+    return {key.strip(): value.strip() for key, value in pairs}
+
+
+@pytest.fixture
+def run_seed(env_example):
+    """Return a function: run_seed(database) -> the finished seed process, run with
+    the .env.example values against that database file."""
+
+    def _run(database: Path) -> subprocess.CompletedProcess:
+        env = {k: v for k, v in os.environ.items() if not k.startswith("CMS_")}
+        env |= env_example | {"CMS_DATABASE": str(database)}
+        return subprocess.run([sys.executable, "scripts/seed_demo.py"], cwd=ROOT, env=env,
+                              capture_output=True, text=True)
+
+    return _run
