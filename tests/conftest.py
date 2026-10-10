@@ -163,20 +163,7 @@ def take_action(csrf_token):
 
 
 @pytest.fixture
-def mark_submitted(database_path: Path):
-    """Return a function: mark_submitted(post_url) makes that post submitted, in
-    storage. T04 (#5) adds the member's Submit button that replaces it."""
-
-    def _mark(url: str) -> None:
-        post_id = int(url.rsplit("/", 1)[1])
-        with closing(db.connect(database_path)) as conn, conn:
-            conn.execute("UPDATE posts SET status = 'submitted' WHERE id = ?", (post_id,))
-
-    return _mark
-
-
-@pytest.fixture
-def published_post(client_as, write_post, take_action, mark_submitted, clock):
+def published_post(client_as, write_post, take_action, clock):
     """Return a function: published_post(by="editor", day=None, **post) -> the admin
     URL of a post written by that demo user (submitted first, when a member wrote
     it) and published by the leader, at noon Monterrey time on that October day
@@ -188,7 +175,7 @@ def published_post(client_as, write_post, take_action, mark_submitted, clock):
             clients.setdefault(role, client_as(role))
         url = write_post(clients[by], **post).headers["location"]
         if by != "admin":
-            mark_submitted(url)
+            take_action(clients[by], url, "submit")
         if day is not None:
             clock.time = f"2026-10-{day:02d}T18:00:00+00:00"
         take_action(clients["admin"], url, "publish")
@@ -249,6 +236,33 @@ def cells():
                  for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)] for row in rows]
 
     return _cells
+
+
+@pytest.fixture
+def button_action():
+    """Return a function: button_action(html, label) -> where the POST form holding
+    the button with this label sends, or None when the page has no such button."""
+
+    def _action(html: str, label: str) -> str | None:
+        for action, form in re.findall(
+                r'<form[^>]*method="post"[^>]*action="([^"]+)"[^>]*>(.*?)</form>', html, re.S):
+            if re.search(rf"<button[^>]*>{label}</button>", form):
+                return action
+        return None
+
+    return _action
+
+
+@pytest.fixture
+def status_of(cells):
+    """Return a function: status_of(client, title) -> that post's status as the
+    content list shows it ("Borrador", "Enviada", "Publicada")."""
+
+    def _status(c: TestClient, title: str) -> str:
+        [row] = [row for row in cells(c.get("/admin/content").text) if row and row[0] == title]
+        return row[3]
+
+    return _status
 
 
 @pytest.fixture

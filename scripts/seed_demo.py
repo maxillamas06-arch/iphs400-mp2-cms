@@ -4,7 +4,8 @@
     uv run python scripts/seed_demo.py
 
 Wipes the database at CMS_DATABASE and creates the leader, two members, a
-member's draft post, and one published post in each topic.
+member's draft post, a member's post submitted for review, and one published
+post in each topic.
 Passwords come from CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD (read from .env,
 or from .env.example on a fresh clone); they are never printed.
 """
@@ -35,6 +36,19 @@ DRAFT = PostFields(
         "- En el segundo nos faltó *cerrar el partido*.\n\n"
         "> Aquí se viene a alentar, no a sufrir. (Mi tío, cada sábado.)\n\n"
         "Mañana le agrego lo del gol del triunfo.\n"
+    ),
+)
+
+# A post its member has submitted, waiting for the leader (written by beto@).
+SUBMITTED = PostFields(
+    title="Tres cambios que yo haría al medio tiempo",
+    topic="coach",
+    body=(
+        "Cuando el partido se traba, el técnico tiene que mover algo antes del 60.\n\n"
+        "1. Meter velocidad por la banda izquierda.\n"
+        "2. Adelantar la presión diez metros.\n"
+        "3. Un medio que pise el área, no solo que dé pases de lado.\n\n"
+        "Ojo: **no estoy pidiendo que lo corran**, nomás que se arriesgue un poquito más.\n"
     ),
 )
 
@@ -116,6 +130,8 @@ def main() -> int:
                                              role=role, nickname=nickname)
                  for email, nickname, role, var in DEMO_USERS}
         content.create_post(conn, users["ana@albiazul.example"], DRAFT)
+        submitted = content.create_post(conn, users["beto@albiazul.example"], SUBMITTED)
+        content.move(conn, submitted, content.SUBMIT)
         for email, fields in PUBLISHED:
             # The seed acts as the leader; in the console a member's post is
             # submitted before the leader can publish it.
@@ -125,8 +141,9 @@ def main() -> int:
     print(f"Rebuilt {path} with these demo accounts:")
     for email, nickname, role, var in DEMO_USERS:
         print(f"  {email:<26} {role:<7} {nickname}  (password: ${var})")
-    print(f"one draft post ({DRAFT.title}) and {len(PUBLISHED)} published posts,"
-          " one per topic. Run `uv run cms publish` to export them to site/.")
+    print(f"one draft post ({DRAFT.title}), one post waiting for review ({SUBMITTED.title})"
+          f" and {len(PUBLISHED)} published posts, one per topic."
+          " Run `uv run cms publish` to export them to site/.")
     return 0
 
 

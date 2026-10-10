@@ -44,6 +44,19 @@
     <p class="help">Se publica la versión guardada: guarda antes tus cambios. Los lectores la verán después de la próxima actualización del sitio, y desde entonces el enlace queda fijo.</p>
     <button class="primary" type="submit">Publicar</button>
   </form>
+  {% if post.status == "submitted" %}
+  <form class="lifecycle" method="post" action="{{ url_for('send_back_post', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Si no se puede publicar así, devuélvela: vuelve a ser borrador y quien la escribió puede corregirla y enviarla otra vez.</p>
+    <button type="submit">Devolver a borrador</button>
+  </form>
+  {% endif %}
+  {% elif post and may_submit_or_withdraw(user, post) %}
+  <form class="lifecycle" method="post" action="{{ url_for('submit_post', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Se envía la versión guardada: guarda antes tus cambios. Mientras el líder la revisa no podrás cambiarla; si necesitas corregir algo, retírala.</p>
+    <button class="primary" type="submit">Enviar para revisión</button>
+  </form>
   {% elif post and user.is_leader %}
   <p class="lifecycle help">Es el borrador de un miembro: podrás publicarlo cuando quien lo escribió lo envíe para revisión.</p>
   {% endif %}

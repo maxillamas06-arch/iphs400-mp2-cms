@@ -5,10 +5,7 @@ Each test name says which acceptance criterion of #3 it covers.
 from __future__ import annotations
 
 import re
-import sqlite3
 import unicodedata
-from contextlib import closing
-from pathlib import Path
 
 import pytest
 
@@ -41,13 +38,6 @@ def form_actions(html: str) -> list[str]:
     """Where the page's POST forms send, leaving out the menu's Salir form."""
     return [action for action in re.findall(r'<form[^>]*method="post"[^>]*action="([^"]+)"', html)
             if not action.endswith("/logout")]
-
-
-def set_every_post_status(database_path: Path, status: str) -> None:
-    # T04 (#5) adds the Submit button; until then, set the status in storage, for
-    # the published case too, so both cases start from the same place.
-    with closing(sqlite3.connect(database_path)) as conn, conn:
-        conn.execute("UPDATE posts SET status = ?", (status,))
 
 
 def test_member_creates_post_saved_as_draft_with_member_as_author_and_timestamps(
@@ -346,10 +336,12 @@ def test_leader_edits_any_members_post(client_as, write_post, csrf_token):
 
 @pytest.mark.parametrize("status", ["submitted", "published"])
 def test_member_can_only_read_their_own_post_once_it_is_not_a_draft(
-        client_as, write_post, csrf_token, database_path, status):
+        client_as, write_post, take_action, csrf_token, status):
     ana = client_as("editor")
     url = write_post(ana, title="Crónica del Clásico Regio", body="Original").headers["location"]
-    set_every_post_status(database_path, status)
+    take_action(ana, url, "submit")
+    if status == "published":
+        take_action(client_as("admin"), url, "publish")
 
     assert "<textarea" not in ana.get(url).text
     response = ana.post(url, data={"csrf_token": csrf_token(ana), "title": "Cambiado",
@@ -434,10 +426,12 @@ def test_missing_title_or_topic_is_refused_with_a_message_and_nothing_is_saved(
 
 @pytest.mark.parametrize("status", ["submitted", "published"])
 def test_leader_edits_any_post_whatever_its_status(
-        client_as, write_post, csrf_token, database_path, status):
+        client_as, write_post, take_action, csrf_token, status):
     ana, leader = client_as("editor"), client_as("admin")
     url = write_post(ana, title="Crónica del Clásico Regio").headers["location"]
-    set_every_post_status(database_path, status)
+    take_action(ana, url, "submit")
+    if status == "published":
+        take_action(leader, url, "publish")
     assert ">Guardar cambios</button>" in leader.get(url).text
 
     saved = leader.post(url, data={"csrf_token": csrf_token(leader), "topic": "match",

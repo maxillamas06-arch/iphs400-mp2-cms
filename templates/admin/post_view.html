@@ -3,7 +3,16 @@
 {% block content %}
   <h1>{{ post.title }}</h1>
   {% include "admin/_post_meta.html" %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if post.status == "submitted" and may_submit_or_withdraw(user, post) %}
+  <form class="lifecycle" method="post" action="{{ url_for('withdraw_post', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">La enviaste al líder para revisión y no se puede cambiar mientras tanto. Si quieres corregir algo, retírala: vuelve a ser borrador.</p>
+    <button type="submit">Retirar</button>
+  </form>
+  {% else %}
   <p class="help">Solo puedes leerla: cada miembro cambia únicamente sus propios borradores.</p>
+  {% endif %}
   <div class="preview-body">{{ body_html | safe }}</div>
   <p><a href="{{ url_for('content') }}">Volver a las publicaciones</a></p>
 {% endblock %}

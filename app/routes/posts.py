@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from app import content, markdown, policy
 from app.accounts import User
-from app.content import Post, PostFields, Transition
+from app.content import Post, PostFields, Status, Transition
 from app.web import Forbidden, NotFound, flash, get_db, render, signed_in_user
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(signed_in_user)])
@@ -43,10 +43,28 @@ def publishable_post(post: Post = Depends(existing_post),
     return post
 
 
+def own_post(post: Post = Depends(existing_post),
+             user: User = Depends(signed_in_user)) -> Post:
+    if not policy.may_submit_or_withdraw(user, post):
+        raise Forbidden(user, "Solo el miembro que escribió esta publicación puede enviarla o"
+                              " retirarla.")
+    return post
+
+
 def render_post_form(request: Request, user: User, post: Post | None,
                      form: PostFields | Post, status_code: int = 200, **context):
     return render(request, "admin/post_form.html", user, status_code=status_code,
                   post=post, form=form, topics=content.TOPICS, **context)
+
+
+def render_post_page(request: Request, user: User, post: Post, status_code: int = 200,
+                     **context):
+    """The post as this person gets it: the editor when they may change it, else
+    read only."""
+    if not policy.may_change_post(user, post):
+        return render(request, "admin/post_view.html", user, status_code=status_code,
+                      post=post, body_html=markdown.to_html(post.body), **context)
+    return render_post_form(request, user, post, post, status_code=status_code, **context)
 
 
 def saved_message(message: str, fields: PostFields, saved: Post) -> str:
@@ -58,9 +76,16 @@ def saved_message(message: str, fields: PostFields, saved: Post) -> str:
 
 
 @router.get("/content", name="content")
-def content_list(request: Request, user: User = Depends(signed_in_user),
+def content_list(request: Request, status: str = "", topic: str = "",
+                 user: User = Depends(signed_in_user),
                  conn: sqlite3.Connection = Depends(get_db)):
-    return render(request, "admin/content.html", user, posts=content.list_posts(conn))
+    # A filter value the list does not offer is no filter at all.
+    chosen_status = Status(status) if status in content.STATUS_NAMES else None
+    chosen_topic = topic if topic in content.TOPICS else None
+    return render(request, "admin/content.html", user,
+                  posts=content.list_posts(conn, chosen_status, chosen_topic),
+                  status=chosen_status, topic=chosen_topic,
+                  statuses=content.STATUS_NAMES, topics=content.TOPICS)
 
 
 @router.get("/posts/new", name="new_post")
@@ -91,10 +116,7 @@ def preview_new_post(request: Request, fields: PostFields = Depends(post_fields)
 @router.get("/posts/{post_id}", name="post")
 def post_page(request: Request, post: Post = Depends(existing_post),
               user: User = Depends(signed_in_user)):
-    if not policy.may_change_post(user, post):
-        return render(request, "admin/post_view.html", user, post=post,
-                      body_html=markdown.to_html(post.body))
-    return render_post_form(request, user, post, post)
+    return render_post_page(request, user, post)
 
 
 @router.post("/posts/{post_id}", name="save_post")
@@ -123,9 +145,25 @@ def take_action(request: Request, user: User, post: Post, conn: sqlite3.Connecti
     try:
         content.move(conn, post, transition)
     except content.ContentError as refused:
-        return render_post_form(request, user, post, post, status_code=400, error=str(refused))
+        return render_post_page(request, user, post, status_code=400, error=str(refused))
     flash(request, done)
     return RedirectResponse(request.app.url_path_for("post", post_id=post.id), status_code=303)
+
+
+@router.post("/posts/{post_id}/submit", name="submit_post")
+def submit_post(request: Request, post: Post = Depends(own_post),
+                user: User = Depends(signed_in_user),
+                conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, conn, content.SUBMIT,
+                       "Enviada al líder para revisión.")
+
+
+@router.post("/posts/{post_id}/withdraw", name="withdraw_post")
+def withdraw_post(request: Request, post: Post = Depends(own_post),
+                  user: User = Depends(signed_in_user),
+                  conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, conn, content.WITHDRAW,
+                       "Retirada. Volvió a ser borrador y puedes seguir escribiéndola.")
 
 
 @router.post("/posts/{post_id}/publish", name="publish_post")
@@ -135,6 +173,15 @@ def publish_post(request: Request, post: Post = Depends(publishable_post),
     return take_action(request, user, post, conn, content.PUBLISH,
                        "Publicada. Los lectores la verán después de la próxima actualización"
                        " del sitio.")
+
+
+@router.post("/posts/{post_id}/send-back", name="send_back_post")
+def send_back_post(request: Request, post: Post = Depends(existing_post),
+                   user: User = Depends(signed_in_user),
+                   conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, conn, content.SEND_BACK,
+                       "Devuelta. Volvió a ser borrador: quien la escribió puede corregirla"
+                       " y enviarla otra vez.")
 
 
 @router.post("/posts/{post_id}/unpublish", name="unpublish_post")

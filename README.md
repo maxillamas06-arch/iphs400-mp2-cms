@@ -29,8 +29,10 @@ Demo accounts (all fictional; passwords are the values in `.env`):
 | `ana@albiazul.example` | member (editor) | Rayada de Corazón | `CMS_EDITOR_PASSWORD` |
 | `beto@albiazul.example` | member (editor) | Furia del Cerro | `CMS_EDITOR_PASSWORD` |
 
-The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*) and
-one published post in each of the five topics, so the exported site has something in every section.
+The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*), one
+post by Furia del Cerro waiting for the leader's review (the *Esperando revisión* count on the
+leader's *Panel*), and one published post in each of the five topics, so the exported site has
+something in every section.
 
 ## What is here
 

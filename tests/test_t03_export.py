@@ -44,11 +44,11 @@ def every_file_in(site) -> dict[str, str]:
 
 
 def test_export_writes_a_page_per_published_post_with_title_nickname_topic_link_spanish_date_and_body(
-        client_as, write_post, take_action, mark_submitted, clock, export):
+        client_as, write_post, take_action, clock, export):
     ana, leader = client_as("editor"), client_as("admin")
     url = write_post(ana, title="Crónica del Clásico Regio", topic="match",
                      body="Ganamos **3-1** en casa.").headers["location"]
-    mark_submitted(url)
+    take_action(ana, url, "submit")
     clock.time = "2026-10-05T01:15:00+00:00"  # already the 5th in UTC; 19:15 on the 4th in Monterrey
     take_action(leader, url, "publish")
 

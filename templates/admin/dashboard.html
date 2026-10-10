@@ -3,4 +3,11 @@
 {% block content %}
   <h1>Hola, {{ user.nickname }}</h1>
   <p>Bienvenido al panel de {{ site_title }}.</p>
+  <h2>Publicaciones</h2>
+  <dl class="counts">
+    {% for status, label in [("draft", "Borradores"), ("submitted", "Esperando revisión"),
+                             ("published", "Publicadas")] %}
+    <div><dt>{{ label }}</dt><dd><a href="{{ url_for('content').include_query_params(status=status) }}">{{ counts[status] }}</a></dd></div>
+    {% endfor %}
+  </dl>
 {% endblock %}

@@ -69,7 +69,7 @@ A post its member is still writing. Never public.
 _Avoid_: Unpublished (too broad), saved
 
 **Submitted** (*Enviada*):
-A post its member has finished and handed to the leader for checking. Never public.
+A post its member has finished and handed to the leader for checking. Never public. The dashboard counts these as *Esperando revisión* (waiting for review): the leader's review queue.
 _Avoid_: Pending, in review, ready
 
 **Published** (*Publicada*):

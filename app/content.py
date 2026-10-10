@@ -50,9 +50,18 @@ class Transition:
 # The post lifecycle (spec #1), one transition per action. Who may take each
 # action is Policy's question; these only say which moves exist.
 
+# Submit: the member hands their finished draft to the leader for checking.
+SUBMIT = Transition(frozenset({Status.DRAFT}), Status.SUBMITTED,
+                    "Solo se puede enviar un borrador.")
+# Withdraw: the member takes their submitted post back to keep working on it.
+WITHDRAW = Transition(frozenset({Status.SUBMITTED}), Status.DRAFT,
+                      "Solo se puede retirar una publicación enviada.")
 # Publish: readers see it from the next site update on.
 PUBLISH = Transition(frozenset({Status.DRAFT, Status.SUBMITTED}), Status.PUBLISHED,
                      "Esta publicación ya está publicada.")
+# Send back: the leader says no to a submitted post; its member can rework it.
+SEND_BACK = Transition(frozenset({Status.SUBMITTED}), Status.DRAFT,
+                       "Solo se puede devolver una publicación enviada.")
 # Unpublish: back to draft; gone from the public site at the next site update.
 UNPUBLISH = Transition(frozenset({Status.PUBLISHED}), Status.DRAFT,
                        "Solo se puede despublicar una publicación publicada.")
@@ -218,7 +227,19 @@ def published_posts(conn: sqlite3.Connection) -> list[Post]:
     return [_post_from_row(row) for row in rows]
 
 
-def list_posts(conn: sqlite3.Connection) -> list[Post]:
-    """Every post from every author, most recently updated first."""
-    rows = conn.execute(f"{_SELECT} ORDER BY posts.updated_at DESC, posts.id DESC").fetchall()
+def count_by_status(conn: sqlite3.Connection) -> dict[Status, int]:
+    """How many posts there are in each status, every author's, zeros included."""
+    found = {row["status"]: row["number"] for row in conn.execute(
+        "SELECT status, COUNT(*) AS number FROM posts GROUP BY status")}
+    return {status: found.get(status, 0) for status in Status}
+
+
+def list_posts(conn: sqlite3.Connection, status: Status | None = None,
+               topic: str | None = None) -> list[Post]:
+    """Every post from every author, most recently updated first; only those in
+    this status, or filed under this topic, when one is given."""
+    rows = conn.execute(f"{_SELECT} WHERE (:status IS NULL OR posts.status = :status)"
+                        " AND (:topic IS NULL OR posts.topic = :topic)"
+                        " ORDER BY posts.updated_at DESC, posts.id DESC",
+                        {"status": status, "topic": topic}).fetchall()
     return [_post_from_row(row) for row in rows]

@@ -15,11 +15,6 @@ SLUG_LOCKED = "El enlace ya no se puede cambiar"
 NOT_SUBMITTED = "El borrador de un miembro se publica cuando quien lo escribió lo envía"
 
 
-def status_in_content_list(client, title: str, cells) -> str:
-    [row] = [row for row in cells(client.get("/admin/content").text) if row and row[0] == title]
-    return row[3]
-
-
 def slug_input(html: str) -> str:
     """The editor's slug <input> tag."""
     match = re.search(r'<input[^>]*name="slug"[^>]*>', html)
@@ -27,42 +22,33 @@ def slug_input(html: str) -> str:
     return match.group(0)
 
 
-def button_form_action(html: str, label: str) -> str | None:
-    """Where the POST form holding the button with this label sends, if there is one."""
-    for action, form in re.findall(r'<form[^>]*method="post"[^>]*action="([^"]+)"[^>]*>(.*?)</form>',
-                                   html, re.S):
-        if re.search(rf"<button[^>]*>{label}</button>", form):
-            return action
-    return None
-
-
 def test_leader_publishes_own_draft_directly_and_it_becomes_published(
-        client_as, write_post, take_action, cells):
+        client_as, write_post, take_action, status_of):
     leader = client_as("admin")
     url = write_post(leader, title="Watch party del Clásico", topic="fan-club-news").headers["location"]
 
     response = take_action(leader, url, "publish")
 
     assert response.status_code == 303
-    assert status_in_content_list(leader, "Watch party del Clásico", cells) == "Publicada"
+    assert status_of(leader, "Watch party del Clásico") == "Publicada"
 
 
 def test_leader_publishes_a_members_post_once_submitted_but_not_while_it_is_their_draft(
-        client_as, write_post, take_action, mark_submitted, cells):
+        client_as, write_post, take_action, button_action, status_of):
     ana, leader = client_as("editor"), client_as("admin")
     url = write_post(ana, title="Crónica del Clásico Regio").headers["location"]
 
-    assert button_form_action(leader.get(url).text, "Publicar") is None
+    assert button_action(leader.get(url).text, "Publicar") is None
     refused = take_action(leader, url, "publish")
     assert refused.status_code == 403
     assert "No tienes permiso" in refused.text and NOT_SUBMITTED in refused.text
-    assert status_in_content_list(leader, "Crónica del Clásico Regio", cells) == "Borrador"
+    assert status_of(leader, "Crónica del Clásico Regio") == "Borrador"
 
-    mark_submitted(url)
+    take_action(ana, url, "submit")
 
-    assert (button_form_action(leader.get(url).text, "Publicar") or "").endswith(f"{url}/publish")
+    assert (button_action(leader.get(url).text, "Publicar") or "").endswith(f"{url}/publish")
     assert take_action(leader, url, "publish").status_code == 303
-    assert status_in_content_list(leader, "Crónica del Clásico Regio", cells) == "Publicada"
+    assert status_of(leader, "Crónica del Clásico Regio") == "Publicada"
 
 
 def test_publishing_sets_first_published_and_locks_the_slug(
@@ -98,7 +84,7 @@ def test_leader_renaming_a_published_post_keeps_its_locked_slug(
 
 
 def test_leader_unpublishes_a_published_post_back_to_draft_and_first_published_is_kept(
-        client_as, write_post, take_action, clock, cells):
+        client_as, write_post, take_action, status_of, clock):
     leader = client_as("admin")
     url = write_post(leader, title="Crónica del Clásico Regio").headers["location"]
     take_action(leader, url, "publish")
@@ -107,7 +93,7 @@ def test_leader_unpublishes_a_published_post_back_to_draft_and_first_published_i
     response = take_action(leader, url, "unpublish")
 
     assert response.status_code == 303
-    assert status_in_content_list(leader, "Crónica del Clásico Regio", cells) == "Borrador"
+    assert status_of(leader, "Crónica del Clásico Regio") == "Borrador"
     page = leader.get(url).text
     assert "Publicada por primera vez: 04/10/2026 12:30" in page
     assert "readonly" in slug_input(page), "the slug stays locked"
@@ -116,30 +102,30 @@ def test_leader_unpublishes_a_published_post_back_to_draft_and_first_published_i
 
 
 def test_leaders_post_page_offers_publicar_on_own_draft_and_despublicar_once_published(
-        client_as, write_post, take_action):
+        client_as, write_post, take_action, button_action):
     leader = client_as("admin")
     url = write_post(leader).headers["location"]
 
     draft = leader.get(url).text
-    assert (button_form_action(draft, "Publicar") or "").endswith(f"{url}/publish")
-    assert button_form_action(draft, "Despublicar") is None
+    assert (button_action(draft, "Publicar") or "").endswith(f"{url}/publish")
+    assert button_action(draft, "Despublicar") is None
     take_action(leader, url, "publish")
     published = leader.get(url).text
-    assert (button_form_action(published, "Despublicar") or "").endswith(f"{url}/unpublish")
-    assert button_form_action(published, "Publicar") is None
+    assert (button_action(published, "Despublicar") or "").endswith(f"{url}/unpublish")
+    assert button_action(published, "Publicar") is None
 
 
 def test_members_see_no_publicar_or_despublicar_button(
-        client_as, write_post, take_action, mark_submitted):
+        client_as, write_post, take_action, button_action):
     ana, leader = client_as("editor"), client_as("admin")
     draft_url = write_post(ana, title="Mi borrador").headers["location"]
     published_url = write_post(ana, title="Ya publicada").headers["location"]
-    mark_submitted(published_url)
+    take_action(ana, published_url, "submit")
     take_action(leader, published_url, "publish")
 
     for page in (ana.get(draft_url).text, ana.get(published_url).text):
-        assert button_form_action(page, "Publicar") is None
-        assert button_form_action(page, "Despublicar") is None
+        assert button_action(page, "Publicar") is None
+        assert button_action(page, "Despublicar") is None
 
 
 @pytest.mark.parametrize("publish_first, action, message", [
@@ -147,26 +133,26 @@ def test_members_see_no_publicar_or_despublicar_button(
     (False, "unpublish", "Solo se puede despublicar una publicación publicada."),
 ])
 def test_leader_publishing_a_published_post_or_unpublishing_a_draft_is_refused_with_a_message(
-        client_as, write_post, take_action, cells, publish_first, action, message):
+        client_as, write_post, take_action, status_of, publish_first, action, message):
     leader = client_as("admin")
     url = write_post(leader, title="Crónica del Clásico Regio").headers["location"]
     if publish_first:
         take_action(leader, url, "publish")
-    before = status_in_content_list(leader, "Crónica del Clásico Regio", cells)
+    before = status_of(leader, "Crónica del Clásico Regio")
 
     response = take_action(leader, url, action)
 
     assert response.status_code == 400
     assert message in response.text
-    assert status_in_content_list(leader, "Crónica del Clásico Regio", cells) == before
+    assert status_of(leader, "Crónica del Clásico Regio") == before
 
 
 def test_member_direct_post_to_publish_or_unpublish_gets_403_and_nothing_changes(
-        client_as, write_post, take_action, mark_submitted, cells):
+        client_as, write_post, take_action, status_of):
     ana, leader = client_as("editor"), client_as("admin")
     draft_url = write_post(ana, title="Mi borrador").headers["location"]
     published_url = write_post(ana, title="Ya publicada").headers["location"]
-    mark_submitted(published_url)
+    take_action(ana, published_url, "submit")
     take_action(leader, published_url, "publish")
 
     for url, action in ((draft_url, "publish"), (published_url, "unpublish"),
@@ -175,12 +161,12 @@ def test_member_direct_post_to_publish_or_unpublish_gets_403_and_nothing_changes
         assert response.status_code == 403, f"member {action} on {url}"
         assert "No tienes permiso" in response.text
 
-    assert status_in_content_list(ana, "Mi borrador", cells) == "Borrador"
-    assert status_in_content_list(ana, "Ya publicada", cells) == "Publicada"
+    assert status_of(ana, "Mi borrador") == "Borrador"
+    assert status_of(ana, "Ya publicada") == "Publicada"
 
 
 def test_a_post_created_through_one_app_instance_is_still_there_through_a_new_instance(
-        database_path, login, demo_users, write_post, take_action, cells):
+        database_path, login, demo_users, write_post, take_action, status_of):
     leader = demo_users["admin"]
     first = TestClient(create_app(database_path))
     login(first, leader["email"], leader["password"])
@@ -191,4 +177,4 @@ def test_a_post_created_through_one_app_instance_is_still_there_through_a_new_in
     second = TestClient(create_app(database_path))  # a fresh app on the same database file
     login(second, leader["email"], leader["password"])
 
-    assert status_in_content_list(second, "Crónica del Clásico Regio", cells) == "Publicada"
+    assert status_of(second, "Crónica del Clásico Regio") == "Publicada"

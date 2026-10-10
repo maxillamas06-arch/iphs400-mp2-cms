@@ -53,6 +53,7 @@ def csrf_token(request: Request) -> str:
 templates.env.globals["csrf_token"] = csrf_token
 # Templates ask Policy only to hide buttons; every route checks again.
 templates.env.globals["may_publish"] = policy.may_publish
+templates.env.globals["may_submit_or_withdraw"] = policy.may_submit_or_withdraw
 
 
 async def require_csrf(request: Request) -> None:

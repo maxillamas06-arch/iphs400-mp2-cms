@@ -14,6 +14,7 @@ LEADER_ONLY_ROUTES = frozenset({
     "users",           # GET /admin/users: the list of accounts
     "publish_post",    # POST /admin/posts/{id}/publish
     "unpublish_post",  # POST /admin/posts/{id}/unpublish
+    "send_back_post",  # POST /admin/posts/{id}/send-back
 })
 
 
@@ -25,6 +26,12 @@ def may_change_post(user: User, post: Post) -> bool:
     """Save, preview or delete this post: the leader, any post; a member, only
     their own drafts (ADR-003)."""
     return user.is_leader or (post.author_id == user.id and post.status == Status.DRAFT)
+
+
+def may_submit_or_withdraw(user: User, post: Post) -> bool:
+    """Submit this post, or withdraw it: only the member who wrote it. The leader
+    publishes or sends back instead (ADR-003)."""
+    return not user.is_leader and post.author_id == user.id
 
 
 def may_publish(user: User, post: Post) -> bool:
