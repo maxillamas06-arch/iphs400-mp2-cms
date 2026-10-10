@@ -16,6 +16,9 @@ uv sync
 cp .env.example .env                  # optional: without it, .env.example is used
 uv run python scripts/seed_demo.py    # wipes and rebuilds cms.db with demo accounts
 uv run cms serve                      # then open http://localhost:8000/admin
+uv run cms publish                    # export the public site to site/ from published posts
+python3 -m http.server -d site 8001   # preview it at http://localhost:8001
+uv run cms deploy                     # put site/ online (the gh-pages branch)
 ```
 
 Demo accounts (all fictional; passwords are the values in `.env`):
@@ -26,7 +29,8 @@ Demo accounts (all fictional; passwords are the values in `.env`):
 | `ana@albiazul.example` | member (editor) | Rayada de Corazón | `CMS_EDITOR_PASSWORD` |
 | `beto@albiazul.example` | member (editor) | Furia del Cerro | `CMS_EDITOR_PASSWORD` |
 
-The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*).
+The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*) and
+one published post in each of the five topics, so the exported site has something in every section.
 
 ## What is here
 

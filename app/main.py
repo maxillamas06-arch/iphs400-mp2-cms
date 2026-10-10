@@ -14,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import db, settings
 from app.routes import auth, dashboard, posts, users
 from app.web import (CsrfRejected, Forbidden, LoginRequired, NotFound, render,
-                     require_csrf, templates)
+                     require_csrf)
 
 
 def create_app(database_path: Path | None = None) -> FastAPI:
@@ -49,11 +49,10 @@ def create_app(database_path: Path | None = None) -> FastAPI:
     app.include_router(posts.router)
     app.include_router(users.router)
 
+    # The public site is the static export (ADR-001), not served here, so the
+    # server's front door is the admin console.
     @app.get("/")
-    def public_home(request: Request):
-        return templates.TemplateResponse(
-            request, "public/home.html",
-            {"title": settings.SITE_TITLE, "items": []},
-        )
+    def front_door(request: Request):
+        return RedirectResponse(app.url_path_for("dashboard"), status_code=303)
 
     return app

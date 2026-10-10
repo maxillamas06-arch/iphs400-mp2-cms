@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,7 @@ from fastapi.routing import APIRoute, iter_route_contexts
 from fastapi.testclient import TestClient
 
 from app import accounts, db
+from app.export import export_site
 from app.main import create_app
 
 # Same emails, nicknames and roles as scripts/seed_demo.py. Passwords come from
@@ -146,6 +148,67 @@ def write_post(csrf_token):
                       follow_redirects=False)
 
     return _write
+
+
+@pytest.fixture
+def take_action(csrf_token):
+    """Return a function: take_action(client, post_url, "publish") -> the (unfollowed)
+    response to that lifecycle action's button on the post's page."""
+
+    def _take(c: TestClient, url: str, action: str):
+        return c.post(f"{url}/{action}", data={"csrf_token": csrf_token(c, url)},
+                      follow_redirects=False)
+
+    return _take
+
+
+@pytest.fixture
+def mark_submitted(database_path: Path):
+    """Return a function: mark_submitted(post_url) makes that post submitted, in
+    storage. T04 (#5) adds the member's Submit button that replaces it."""
+
+    def _mark(url: str) -> None:
+        post_id = int(url.rsplit("/", 1)[1])
+        with closing(db.connect(database_path)) as conn, conn:
+            conn.execute("UPDATE posts SET status = 'submitted' WHERE id = ?", (post_id,))
+
+    return _mark
+
+
+@pytest.fixture
+def published_post(client_as, write_post, take_action, mark_submitted, clock):
+    """Return a function: published_post(by="editor", day=None, **post) -> the admin
+    URL of a post written by that demo user (submitted first, when a member wrote
+    it) and published by the leader, at noon Monterrey time on that October day
+    if one is given. `post` takes write_post's fields."""
+    clients: dict[str, TestClient] = {}
+
+    def _published(by: str = "editor", day: int | None = None, **post: str) -> str:
+        for role in (by, "admin"):
+            clients.setdefault(role, client_as(role))
+        url = write_post(clients[by], **post).headers["location"]
+        if by != "admin":
+            mark_submitted(url)
+        if day is not None:
+            clock.time = f"2026-10-{day:02d}T18:00:00+00:00"
+        take_action(clients["admin"], url, "publish")
+        return url
+
+    return _published
+
+
+@pytest.fixture
+def export(database_path: Path, tmp_path: Path):
+    """Return a function: export(database=None) -> the folder the site export wrote,
+    from this test's database unless another is given. Every call regenerates it."""
+
+    def _export(database: Path | None = None) -> Path:
+        out = tmp_path / "site"
+        with closing(db.connect(database or database_path)) as conn:
+            export_site(conn, out)
+        return out
+
+    return _export
 
 
 @pytest.fixture

@@ -1,0 +1,25 @@
+/* The public site: navy and white, with rayas across the top of every page. */
+:root { --navy: #0b2a5b; --navy-soft: #e8edf6; --ink: #1a1a1a; --muted: #4a4a4a; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 17px/1.6 system-ui, sans-serif; color: var(--ink); background: #fff; }
+a { color: var(--navy); }
+
+.stripes { height: 2.5rem; background: repeating-linear-gradient(90deg, var(--navy) 0 1.25rem, #fff 1.25rem 2.5rem); }
+.band { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1.5rem; padding: .75rem 1rem; background: var(--navy); color: #fff; }
+.band a { color: #fff; }
+.site-name { font-size: 1.2rem; font-weight: 800; text-decoration: none; }
+.menu, .topics { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+.topics { padding: .5rem 1rem; background: var(--navy-soft); border-bottom: 3px solid var(--navy); }
+.topics a { font-weight: 600; text-decoration: none; }
+
+main { max-width: 44rem; margin: 0 auto; padding: 1rem; overflow-wrap: anywhere; }
+h1, h2 { color: var(--navy); line-height: 1.2; }
+.meta { margin: .25rem 0; color: var(--muted); font-size: .9rem; }
+.posts { padding: 0; list-style: none; }
+.posts li { padding: .5rem 0; border-bottom: 1px solid var(--navy-soft); }
+.body pre { overflow-x: auto; padding: .5rem; background: var(--navy-soft); }
+.body blockquote { margin-left: 0; padding-left: 1rem; border-left: 4px solid var(--navy); }
+
+footer { margin-top: 2rem; padding: 1rem; background: var(--navy); color: #fff; text-align: center; }
+.disclaimer { margin: 0; }
+.disclaimer[lang="en"] { font-size: .85rem; opacity: .85; }

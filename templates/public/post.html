@@ -1,0 +1,10 @@
+{% extends "public/base.html" %}
+{% block title %}{{ post.title }} · {{ site_title }}{% endblock %}
+{% block content %}
+  <article>
+    <h1>{{ post.title }}</h1>
+    <p class="meta">Por {{ post.author_nickname }} · <a href="{{ href(topic.path) }}">{{ topic.name }}</a></p>
+    <p class="meta">Publicado el {{ post.first_published_at | spanish_date }}</p>
+    <div class="body">{{ body_html | safe }}</div>
+  </article>
+{% endblock %}

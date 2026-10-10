@@ -4,25 +4,15 @@ from __future__ import annotations
 import secrets
 import sqlite3
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, Request
 from fastapi.templating import Jinja2Templates
 
 from app import accounts, db, policy, settings
 from app.accounts import User
+from app.dates import monterrey_time
 
 templates = Jinja2Templates(directory=str(settings.TEMPLATES))
-
-# Monterrey keeps a fixed UTC-6 offset, so no time-zone database is needed.
-MONTERREY = timezone(timedelta(hours=-6))
-
-
-def monterrey_time(stored: str) -> str:
-    """A stored UTC timestamp as Monterrey time: 04/10/2026 12:30."""
-    return datetime.fromisoformat(stored).astimezone(MONTERREY).strftime("%d/%m/%Y %H:%M")
-
-
 templates.env.filters["monterrey_time"] = monterrey_time
 
 
@@ -61,6 +51,8 @@ def csrf_token(request: Request) -> str:
 
 
 templates.env.globals["csrf_token"] = csrf_token
+# Templates ask Policy only to hide buttons; every route checks again.
+templates.env.globals["may_publish"] = policy.may_publish
 
 
 async def require_csrf(request: Request) -> None:

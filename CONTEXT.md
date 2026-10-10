@@ -84,8 +84,8 @@ _Avoid_: Cancel, unsubmit
 The leader saying no: a submitted post returns to draft, or a pending edit is thrown away.
 _Avoid_: Reject, decline
 
-**Unpublish**:
-The leader returning a published post to draft, taking it off the public site at the next site update.
+**Unpublish** (*Despublicar*):
+The leader returning a published post to draft, taking it off the public site at the next site update. The slug stays locked.
 _Avoid_: Archive, hide, retract
 
 **Pending edit**:
@@ -99,6 +99,10 @@ _Avoid_: Merge, accept, publish (publish is for submitted posts)
 **Site update** (*Actualizar el sitio*):
 The leader regenerating the public site from everything published and putting it online. Readers see nothing new until a site update; publishing alone changes nothing they can see.
 _Avoid_: Publish (that is the status change), deploy, build, export
+
+**Export**:
+The first half of a site update: writing the public site's files from everything published, wiping what was there (`cms publish`). The second half puts those files online (`cms deploy`).
+_Avoid_: Publish (that is the status change), build, render
 
 ### House rules
 

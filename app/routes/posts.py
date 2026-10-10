@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from app import content, markdown, policy
 from app.accounts import User
-from app.content import Post, PostFields
+from app.content import Post, PostFields, Transition
 from app.web import Forbidden, NotFound, flash, get_db, render, signed_in_user
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(signed_in_user)])
@@ -32,6 +32,14 @@ def changeable_post(post: Post = Depends(existing_post),
                     user: User = Depends(signed_in_user)) -> Post:
     if not policy.may_change_post(user, post):
         raise Forbidden(user, "Solo puedes cambiar o borrar tus propios borradores.")
+    return post
+
+
+def publishable_post(post: Post = Depends(existing_post),
+                     user: User = Depends(signed_in_user)) -> Post:
+    if not policy.may_publish(user, post):
+        raise Forbidden(user, "El borrador de un miembro se publica cuando quien lo escribió"
+                              " lo envía para revisión.")
     return post
 
 
@@ -107,6 +115,35 @@ def preview_post(request: Request, post: Post = Depends(changeable_post),
                  fields: PostFields = Depends(post_fields), user: User = Depends(signed_in_user)):
     return render_post_form(request, user, post, fields,
                             preview_html=markdown.to_html(fields.body))
+
+
+def take_action(request: Request, user: User, post: Post, conn: sqlite3.Connection,
+                transition: Transition, done: str):
+    """A lifecycle button: done with a message, or refused with the reason why."""
+    try:
+        content.move(conn, post, transition)
+    except content.ContentError as refused:
+        return render_post_form(request, user, post, post, status_code=400, error=str(refused))
+    flash(request, done)
+    return RedirectResponse(request.app.url_path_for("post", post_id=post.id), status_code=303)
+
+
+@router.post("/posts/{post_id}/publish", name="publish_post")
+def publish_post(request: Request, post: Post = Depends(publishable_post),
+                 user: User = Depends(signed_in_user),
+                 conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, conn, content.PUBLISH,
+                       "Publicada. Los lectores la verán después de la próxima actualización"
+                       " del sitio.")
+
+
+@router.post("/posts/{post_id}/unpublish", name="unpublish_post")
+def unpublish_post(request: Request, post: Post = Depends(existing_post),
+                   user: User = Depends(signed_in_user),
+                   conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, conn, content.UNPUBLISH,
+                       "Volvió a ser borrador. Desaparecerá del sitio público con la próxima"
+                       " actualización del sitio.")
 
 
 @router.get("/posts/{post_id}/delete", name="confirm_delete_post")

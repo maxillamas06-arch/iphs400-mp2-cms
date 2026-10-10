@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_title }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ href('style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="stripes" aria-hidden="true"></div>
+    <div class="band">
+      <a class="site-name" href="{{ href('index.html') }}">{{ site_title }}</a>
+      <nav class="menu" aria-label="Menú">
+        <a href="{{ href('index.html') }}">Inicio</a>
+      </nav>
+    </div>
+    <nav class="topics" aria-label="Temas">
+      {% for topic in topics %}<a href="{{ href(topic.path) }}">{{ topic.name }}</a>
+      {% endfor %}
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p class="disclaimer">Sitio de aficionados. Sin afiliación con el Club de Fútbol Monterrey.</p>
+    <p class="disclaimer" lang="en">Fan site, not affiliated with Club de Fútbol Monterrey.</p>
+  </footer>
+</body>
+</html>

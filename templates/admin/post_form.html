@@ -10,8 +10,13 @@
     <label for="title">Título</label>
     <input id="title" name="title" type="text" value="{{ form.title }}" required>
     <label for="slug">Enlace</label>
+    {% if post and post.slug_locked %}
+    <input id="slug" name="slug" type="text" value="{{ post.slug }}" readonly aria-describedby="slug-help">
+    <p id="slug-help" class="help">Quedó fijo cuando se publicó por primera vez, para que los enlaces compartidos sigan funcionando.</p>
+    {% else %}
     <input id="slug" name="slug" type="text" value="{{ form.slug }}" placeholder="Se crea a partir del título" aria-describedby="slug-help">
     <p id="slug-help" class="help">Solo letras minúsculas, números y guiones. Puedes cambiarlo hasta que el líder la publique por primera vez; después queda fijo para que los enlaces compartidos sigan funcionando.</p>
+    {% endif %}
     <label for="topic">Tema</label>
     <select id="topic" name="topic" required>
       <option value="">Elige un tema</option>
@@ -27,6 +32,21 @@
       {% if post %}<a class="danger" href="{{ url_for('confirm_delete_post', post_id=post.id) }}">Borrar</a>{% endif %}
     </div>
   </form>
+  {% if post and user.is_leader and post.status == "published" %}
+  <form class="lifecycle" method="post" action="{{ url_for('unpublish_post', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Está publicada. Si la despublicas vuelve a ser borrador, y desaparece del sitio público con la próxima actualización del sitio.</p>
+    <button type="submit">Despublicar</button>
+  </form>
+  {% elif post and may_publish(user, post) %}
+  <form class="lifecycle" method="post" action="{{ url_for('publish_post', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Se publica la versión guardada: guarda antes tus cambios. Los lectores la verán después de la próxima actualización del sitio, y desde entonces el enlace queda fijo.</p>
+    <button class="primary" type="submit">Publicar</button>
+  </form>
+  {% elif post and user.is_leader %}
+  <p class="lifecycle help">Es el borrador de un miembro: podrás publicarlo cuando quien lo escribió lo envíe para revisión.</p>
+  {% endif %}
   {% if preview_html is defined %}
   <section class="preview" aria-label="Vista previa">
     <h2>Vista previa</h2>

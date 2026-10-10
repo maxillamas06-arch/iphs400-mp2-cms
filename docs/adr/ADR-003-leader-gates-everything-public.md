@@ -19,7 +19,8 @@ names editable at any time (a rename reprints unchecked text on every past post)
 
 - Posts move **draft → submitted → published**. Members cannot publish; the
   leader publishes a submitted post or sends it back to draft. A member may
-  withdraw their own submitted post to draft.
+  withdraw their own submitted post to draft. Only the leader's own posts may be
+  published straight from draft (settled in the T03 review, #4).
 - A member's change to their own published post becomes a **pending edit** (at
   most one per post). The published version stays public until the leader
   approves the edit or sends it back.

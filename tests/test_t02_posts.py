@@ -44,7 +44,8 @@ def form_actions(html: str) -> list[str]:
 
 
 def set_every_post_status(database_path: Path, status: str) -> None:
-    # T03 and T04 add the publish and submit buttons; until then, set the status in storage.
+    # T04 (#5) adds the Submit button; until then, set the status in storage, for
+    # the published case too, so both cases start from the same place.
     with closing(sqlite3.connect(database_path)) as conn, conn:
         conn.execute("UPDATE posts SET status = ?", (status,))
 

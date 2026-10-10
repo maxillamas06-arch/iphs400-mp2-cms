@@ -1,0 +1,10 @@
+{% extends "public/base.html" %}
+{% block title %}{{ topic.name }} · {{ site_title }}{% endblock %}
+{% block content %}
+  <h1>{{ topic.name }}</h1>
+  {% if topic.posts %}
+  {% with posts = topic.posts %}{% include "public/_posts.html" %}{% endwith %}
+  {% else %}
+  <p>Todavía no hay publicaciones sobre este tema.</p>
+  {% endif %}
+{% endblock %}

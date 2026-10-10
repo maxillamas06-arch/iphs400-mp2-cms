@@ -13,21 +13,22 @@ def test_admin_console_answers(client_as):
     assert "Hola" in response.text
 
 
-def test_public_home_answers(client):
+def test_front_door_leads_into_the_admin_console(client):
+    # Was test_public_home_answers. T03 (#4): the public home is index.html in the
+    # export (ADR-001; see the export tests below), so / leads into the console.
     response = client.get("/")
     assert response.status_code == 200
+    assert response.url.path == "/login"
 
 
-def test_publish_writes_a_site(tmp_path):
-    from app.publish import render_site
-
-    out = render_site(tmp_path / "site")
+# T03 (#4) renamed app/publish.py to app/export.py ("publish" is now the status
+# change) and the export reads the database, so these use the `export` fixture.
+def test_publish_writes_a_site(export):
+    out = export()
     assert (out / "index.html").exists() and (out / "style.css").exists()
 
 
-def test_published_html_uses_relative_paths(tmp_path):
+def test_published_html_uses_relative_paths(export):
     """Root-absolute paths break on GitHub Pages project URLs (rubric F2)."""
-    from app.publish import render_site
-
-    html = (render_site(tmp_path / "site") / "index.html").read_text()
+    html = (export() / "index.html").read_text()
     assert 'href="/' not in html and 'src="/' not in html

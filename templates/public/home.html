@@ -1,9 +1,14 @@
-{% extends "base.html" %}
+{% extends "public/base.html" %}
 {% block content %}
-  <h1>{{ title }}</h1>
-  {% if items %}
-    <ul>{% for item in items %}<li><a href="{{ item.href }}">{{ item.title }}</a></li>{% endfor %}</ul>
+  <h1>{{ site_title }}</h1>
+  <p>Lo que opinamos los aficionados de Rayados, tema por tema.</p>
+  {% for topic in topics if topic.posts %}
+  <section>
+    <h2><a href="{{ href(topic.path) }}">{{ topic.name }}</a></h2>
+    {% with posts = topic.posts[:3] %}{% include "public/_posts.html" %}{% endwith %}
+    <p><a href="{{ href(topic.path) }}">Ver todos</a></p>
+  </section>
   {% else %}
-    <p>Nothing published yet.</p>
-  {% endif %}
+  <p>Todavía no hay publicaciones.</p>
+  {% endfor %}
 {% endblock %}
