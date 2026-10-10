@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% block title %}Sin permiso{% endblock %}
+{% block content %}
+  <h1>No tienes permiso</h1>
+  <p>Esta pantalla es solo para el líder del club de aficionados.</p>
+  <p><a href="{{ url_for('dashboard') }}">Volver al panel</a></p>
+{% endblock %}

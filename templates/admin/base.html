@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Administración{% endblock %} · {{ site_title }}</title>
+  <style>
+    :root { --navy: #0b2a5b; --navy-soft: #e8edf6; --ink: #1a1a1a; --line: #c9d3e6; --bad: #a3122a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--ink); background: #fff; }
+    .site { background: var(--navy); color: #fff; padding: .75rem 1rem; }
+    .site strong { display: block; }
+    nav.menu { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-items: center; margin-top: .5rem; }
+    nav.menu a, nav.menu button { color: #fff; font: inherit; }
+    nav.menu form { margin: 0; }
+    nav.menu button { background: none; border: 1px solid #fff; border-radius: 4px; padding: .1rem .6rem; cursor: pointer; }
+    main { max-width: 60rem; margin: 0 auto; padding: 1rem; }
+    .error { color: var(--bad); font-weight: 600; }
+    label { display: block; margin-top: .75rem; font-weight: 600; }
+    input[type=email], input[type=password], input[type=text] { width: 100%; max-width: 24rem; padding: .4rem; font: inherit; }
+    button.primary { margin-top: 1rem; background: var(--navy); color: #fff; border: 0; border-radius: 4px; padding: .5rem 1rem; font: inherit; cursor: pointer; }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
+    th { background: var(--navy-soft); }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <strong>{{ site_title }}</strong>
+    {% if user %}
+    <nav class="menu" aria-label="Menú de administración">
+      <a href="{{ url_for('dashboard') }}">Panel</a>
+      {% if user.is_leader %}<a href="{{ url_for('users') }}">Cuentas</a>{% endif %}
+      <span>{{ user.nickname }}</span>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+        <button type="submit">Salir</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

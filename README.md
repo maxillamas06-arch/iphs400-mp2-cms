@@ -13,9 +13,18 @@ Do not fork: a fork arrives without an Issues tab, and your tickets live in Issu
 
 ```bash
 uv sync
-cp .env.example .env
-uv run cms serve        # then open http://localhost:8000/admin  -> "T00: hello admin"
+cp .env.example .env                  # optional: without it, .env.example is used
+uv run python scripts/seed_demo.py    # wipes and rebuilds cms.db with demo accounts
+uv run cms serve                      # then open http://localhost:8000/admin
 ```
+
+Demo accounts (all fictional; passwords are the values in `.env`):
+
+| Email | Role | Nickname | Password |
+|---|---|---|---|
+| `lider@albiazul.example` | leader (admin) | El Capi | `CMS_ADMIN_PASSWORD` |
+| `ana@albiazul.example` | member (editor) | Rayada de Corazón | `CMS_EDITOR_PASSWORD` |
+| `beto@albiazul.example` | member (editor) | Furia del Cerro | `CMS_EDITOR_PASSWORD` |
 
 ## What is here
 

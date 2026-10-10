@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
-"""Create demo data so a grader (and you) can use the CMS immediately.
+"""Rebuild the demo database from scratch, with fictional data only.
 
     uv run python scripts/seed_demo.py
 
-T00 has nothing to seed. As you build content types, extend this so it creates:
-  - one admin and one editor (passwords read from .env, never hard-coded)
-  - a few posts and pages, at least one draft and one published
-
-The rubric expects this to run clean on a fresh clone with .env.example values
-(item E4), because the database itself is never committed.
+Wipes the database at CMS_DATABASE and creates the leader and two members.
+Passwords come from CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD (read from .env,
+or from .env.example on a fresh clone); they are never printed.
 """
 from __future__ import annotations
 
 import os
 import sys
+from contextlib import closing
+
+from app import accounts, db, settings
+
+# (email, nickname, role, environment variable holding the password).
+# tests/conftest.py uses the same emails and nicknames.
+DEMO_USERS = [
+    ("lider@albiazul.example", "El Capi", "admin", "CMS_ADMIN_PASSWORD"),
+    ("ana@albiazul.example", "Rayada de Corazón", "editor", "CMS_EDITOR_PASSWORD"),
+    ("beto@albiazul.example", "Furia del Cerro", "editor", "CMS_EDITOR_PASSWORD"),
+]
 
 
 def main() -> int:
-    admin_pw = os.environ.get("CMS_ADMIN_PASSWORD")
-    editor_pw = os.environ.get("CMS_EDITOR_PASSWORD")
-    if not admin_pw or not editor_pw:
-        print("Set CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD in .env "
-              "(copy .env.example).")
+    missing = sorted({var for *_, var in DEMO_USERS if not os.environ.get(var)})
+    if missing:
+        print(f"Set {', '.join(missing)} in .env (copy .env.example).")
         return 1
 
-    # TODO (your tickets): create the users, then the demo content.
-    print("Nothing to seed yet: no content types exist. "
-          "Extend scripts/seed_demo.py as you build T01+.")
+    path = settings.DATABASE_PATH
+    path.unlink(missing_ok=True)
+    db.init(path)
+    with closing(db.connect(path)) as conn:
+        for email, nickname, role, var in DEMO_USERS:
+            accounts.create_user(conn, email=email, password=os.environ[var],
+                                 role=role, nickname=nickname)
+
+    print(f"Rebuilt {path} with these demo accounts:")
+    for email, nickname, role, var in DEMO_USERS:
+        print(f"  {email:<26} {role:<7} {nickname}  (password: ${var})")
     return 0
 
 
