@@ -36,3 +36,17 @@ admin console never goes on the public internet.
   starts `T0N:` and ends `Closes #N`.
 - Ask before adding a dependency. The stack in `pyproject.toml` is fixed for this
   project.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues via `gh`; spec/ticket/stretch labels per the rubric. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
