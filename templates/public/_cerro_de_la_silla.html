@@ -1,0 +1,45 @@
+{# The home page's banner: the Cerro de la Silla over the city, drawn for this site.
+   The scene is wide and the peaks sit low, so a wide screen crops only sky and
+   foothills. Solid fills only, so it needs no image file and no pattern. #}
+<svg class="banner" viewBox="0 0 2400 300" preserveAspectRatio="xMidYMax slice"
+     role="img" aria-label="Cerro de la Silla">
+  <title>Cerro de la Silla</title>
+  <rect width="2400" height="300" fill="#e8edf6"/>
+  <g fill="#fff">
+    <ellipse cx="780" cy="96" rx="70" ry="16"/><ellipse cx="825" cy="84" rx="42" ry="20"/>
+    <ellipse cx="1560" cy="78" rx="80" ry="15"/><ellipse cx="1610" cy="66" rx="45" ry="20"/>
+    <ellipse cx="300" cy="120" rx="60" ry="14"/><ellipse cx="2120" cy="110" rx="64" ry="14"/>
+  </g>
+  {# The far sierra, paler, behind the Cerro. #}
+  <path fill="#b9c7e2" d="M0 300V214C200 196 360 206 520 192S760 166 860 180S1080 160 1200 178
+    S1440 160 1560 176S1800 160 1960 182S2200 170 2400 186V300Z"/>
+  {# The Cerro: up to the north peak, down into the saddle, up to the horn, and down. #}
+  <path fill="#0b2a5b" d="M0 300V266C300 264 640 254 800 236C900 224 980 204 1030 180
+    C1050 160 1070 136 1080 118C1100 104 1112 94 1124 92C1138 90 1148 96 1160 109
+    C1180 131 1196 156 1214 170C1232 182 1260 184 1282 171C1302 159 1318 134 1336 113
+    L1350 102C1360 107 1372 119 1392 140C1442 182 1552 216 1652 232C1800 250 2100 260
+    2400 262V300Z"/>
+  {# A fan's flag on the north peak, with the rayas. #}
+  <line x1="1124" y1="93" x2="1124" y2="54" stroke="#0b2a5b" stroke-width="3"/>
+  <rect x="1125" y="54" width="34" height="22" fill="#fff" stroke="#0b2a5b" stroke-width="2"/>
+  <g fill="#0b2a5b">
+    <rect x="1130" y="54" width="6" height="22"/><rect x="1142" y="54" width="6" height="22"/>
+    <rect x="1154" y="54" width="5" height="22"/>
+  </g>
+  {# The city at the foot of the Cerro, on ground that runs the whole width. #}
+  <rect y="284" width="2400" height="16" fill="#061d42"/>
+  <g transform="translate(600 0)">
+    <path fill="#061d42" d="M0 300V278H30V282H60V270H78V282H100V240H122V262H152V262H170V278H188
+      V270H206V262H228V274H246V266H268V278H304V282H330V262H360V266H378V282H400V266H426V270
+      H444V270H462V278H484V282H506V266H528V274H564V266H590V266H616V232H642V278H660V270H678
+      V274H714V240H744V282H770V240H788V282H810V270H828V274H864V270H894V232H924V278H950V266
+      H972V274H1008V262H1034V262H1060V270H1090V274H1108V274H1134V232H1152V278H1170V274H1200
+      V300Z"/>
+    <g fill="#e8edf6">
+      <rect x="106" y="248" width="4" height="6"/><rect x="114" y="248" width="4" height="6"/>
+      <rect x="622" y="240" width="4" height="6"/><rect x="632" y="240" width="4" height="6"/>
+      <rect x="622" y="254" width="4" height="6"/><rect x="900" y="240" width="4" height="6"/>
+      <rect x="912" y="254" width="4" height="6"/><rect x="1140" y="240" width="4" height="6"/>
+    </g>
+  </g>
+</svg>

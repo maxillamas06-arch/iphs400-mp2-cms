@@ -117,8 +117,12 @@ The leader regenerating the public site from everything published and putting it
 _Avoid_: Publish (that is the status change), deploy, build, export
 
 **Export**:
-The first half of a site update: writing the public site's files from everything published, wiping what was there (`cms publish`). The second half puts those files online (`cms deploy`).
+The first half of a site update: writing the public site's files from everything published, wiping what was there (`cms publish`). The dashboard shows when the last one happened (*Sitio generado por última vez*).
 _Avoid_: Publish (that is the status change), build, render
+
+**Upload** (*Subir*):
+The second half of a site update: putting the exported files online on GitHub Pages (`cms deploy`). If it fails, the export still stands and readers keep the previous site.
+_Avoid_: Deploy (in prose), push, publish
 
 ### House rules
 

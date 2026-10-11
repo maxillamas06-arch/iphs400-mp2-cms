@@ -59,6 +59,12 @@ CREATE TABLE IF NOT EXISTS pages (
     updated_at         TEXT    NOT NULL,
     first_published_at TEXT    -- set once, never cleared; locks the slug
 );
+
+-- The public site's state: when it was last exported. One row at most.
+CREATE TABLE IF NOT EXISTS site_state (
+    id             INTEGER PRIMARY KEY CHECK (id = 1),
+    last_export_at TEXT    NOT NULL
+);
 """
 
 

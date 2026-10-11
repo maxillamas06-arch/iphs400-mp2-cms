@@ -24,4 +24,14 @@
     <div><dt>Miembros activos</dt><dd><a href="{{ url_for('users') }}">{{ members }}</a></dd></div>
   </dl>
   {% endif %}
+  {% if may_update_site(user) %}
+  <h2>Sitio público</h2>
+  <p>Sitio generado por última vez: {{ last_export | monterrey_time if last_export else "nunca" }}</p>
+  <p class="help">Los lectores no ven nada nuevo hasta que actualizas el sitio: este botón lo
+    genera con todo lo publicado y lo sube a GitHub.</p>
+  <form method="post" action="{{ url_for('update_site') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <button type="submit" class="primary">Actualizar el sitio</button>
+  </form>
+  {% endif %}
 {% endblock %}

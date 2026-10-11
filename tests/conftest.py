@@ -10,6 +10,9 @@ line:
 
 Every POST needs a CSRF token; `csrf_token(client)` reads it from an admin page
 the way a browser would.
+
+The test app's site update exports to a temporary `public_site` folder and uploads
+with a fake (`uploads`), so no test writes site/ or uploads anything to GitHub.
 """
 from __future__ import annotations
 
@@ -25,9 +28,10 @@ import pytest
 from fastapi.routing import APIRoute, iter_route_contexts
 from fastapi.testclient import TestClient
 
-from app import accounts, db
+from app import accounts, db, main, settings
 from app.export import export_site
 from app.main import create_app
+from app.site_update import UploadFailed
 
 # Same emails, nicknames and roles as scripts/seed_demo.py. Passwords come from
 # the environment there; in tests they are fixed and meaningless.
@@ -78,9 +82,61 @@ def inactive_user(database_path: Path) -> dict[str, str]:
     return user
 
 
+class FakeUpload:
+    """Stands in for the upload to GitHub Pages, so nothing goes online. Records
+    the files of each folder it is handed, as they were when the upload ran, and
+    fails like a dropped connection while `failing` is set."""
+
+    def __init__(self) -> None:
+        self.sent: list[set[str]] = []
+        self.failing = False
+
+    def __call__(self, site: Path) -> None:
+        if self.failing:
+            raise UploadFailed("could not read from remote repository")
+        self.sent.append({path.relative_to(site).as_posix()
+                          for path in site.rglob("*") if path.is_file()})
+
+
+@pytest.fixture(autouse=True)
+def nothing_goes_online(monkeypatch, tmp_path: Path) -> None:
+    """Every test, even one that builds its app without `app_for`: the site update
+    exports to a temporary folder instead of site/, and the upload fails before
+    anything reaches GitHub. A test that wants the real upload passes it in."""
+
+    def refuse(site: Path) -> None:
+        raise UploadFailed("tests never upload to GitHub")
+
+    monkeypatch.setattr(main, "upload_to_github_pages", refuse)
+    monkeypatch.setattr(settings, "SITE", tmp_path / "default-site")
+
+
 @pytest.fixture
-def client(database_path: Path) -> TestClient:
-    return TestClient(create_app(database_path))
+def uploads() -> FakeUpload:
+    """The fake upload every test app uses: uploads.sent, uploads.failing = True."""
+    return FakeUpload()
+
+
+@pytest.fixture
+def public_site(tmp_path: Path) -> Path:
+    """Where the test app's site update exports the public site (never site/)."""
+    return tmp_path / "public-site"
+
+
+@pytest.fixture
+def app_for(public_site: Path, uploads: FakeUpload):
+    """Return a function: app_for(database) -> the admin console on that database,
+    exporting to `public_site` and uploading with the fake."""
+
+    def _app(database: Path):
+        return create_app(database, site=public_site, upload=uploads)
+
+    return _app
+
+
+@pytest.fixture
+def client(database_path: Path, app_for) -> TestClient:
+    return TestClient(app_for(database_path))
 
 
 @pytest.fixture
@@ -109,12 +165,12 @@ def login(csrf_token):
 
 
 @pytest.fixture
-def client_as(database_path: Path, login):
+def client_as(database_path: Path, login, app_for):
     """Return a factory: client_as("editor") -> a signed-in TestClient."""
 
     def _client_as(role: str) -> TestClient:
         user = DEMO_USERS[role]
-        c = TestClient(create_app(database_path))
+        c = TestClient(app_for(database_path))
         response = login(c, user["email"], user["password"])
         assert response.status_code == 303, (
             f"Login as {role} failed with {response.status_code}")

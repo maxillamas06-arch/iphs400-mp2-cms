@@ -22,10 +22,12 @@
       {% endfor %}
     </nav>
   </header>
+  {% block banner %}{% endblock %}
   <main>
     {% block content %}{% endblock %}
   </main>
   <footer>
+    {% include "public/_stadium.html" %}
     <p class="disclaimer">Sitio de aficionados. Sin afiliación con el Club de Fútbol Monterrey.</p>
     <p class="disclaimer" lang="en">Fan site, not affiliated with Club de Fútbol Monterrey.</p>
   </footer>

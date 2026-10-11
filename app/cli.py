@@ -7,11 +7,9 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
-import sys
 from contextlib import closing
 
-from app import db, settings
+from app import db, settings, site_update
 from app.export import export_site
 
 
@@ -48,14 +46,14 @@ def main(argv: list[str] | None = None) -> int:
         if not settings.SITE.exists():
             print("site/ does not exist yet — run `uv run cms publish` first.")
             return 1
-        result = subprocess.run(
-            [sys.executable, "-m", "ghp_import", "-n", "-p", "-m", args.message,
-             str(settings.SITE)],
-        )
-        if result.returncode == 0:
-            print("Pushed to gh-pages. Settings -> Pages -> Deploy from a branch -> "
-                  "gh-pages / root, then wait up to 10 minutes.")
-        return result.returncode
+        try:
+            site_update.upload_to_github_pages(settings.SITE, args.message,
+                                               from_terminal=True)
+        except site_update.UploadFailed:
+            return 1  # git has said why, in this terminal
+        print("Pushed to gh-pages. Settings -> Pages -> Deploy from a branch -> "
+              "gh-pages / root, then wait up to 10 minutes.")
+        return 0
     return 1
 
 

@@ -21,6 +21,10 @@ python3 -m http.server -d site 8001   # preview it at http://localhost:8001
 uv run cms deploy                     # put site/ online (the gh-pages branch)
 ```
 
+In the console, the leader's *Actualizar el sitio* button on the *Panel* does both
+`cms publish` and `cms deploy`, says how each step went, and the *Panel* shows when the site
+was last generated.
+
 Demo accounts (all fictional; passwords are the values in `.env`):
 
 | Email | Role | Nickname | Password |

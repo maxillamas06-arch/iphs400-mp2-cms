@@ -37,6 +37,7 @@ LEADER_ONLY_ROUTES = frozenset({
     "unpublish_page",  # POST /admin/pages/{id}/unpublish
     "confirm_delete_page",  # GET  /admin/pages/{id}/delete: are you sure?
     "delete_page",     # POST /admin/pages/{id}/delete
+    "update_site",     # POST /admin/site-update: export, then upload to GitHub Pages
 })
 
 
@@ -65,6 +66,12 @@ def may_manage_accounts(user: User) -> bool:
 def may_manage_pages(user: User) -> bool:
     """See, write, publish and delete pages: the leader only. Pages are the fan
     club's own voice, never submitted (ADR-003)."""
+    return user.is_leader
+
+
+def may_update_site(user: User) -> bool:
+    """Put everything published online with Actualizar el sitio: the leader only.
+    Nothing reaches readers without the leader (ADR-003)."""
     return user.is_leader
 
 

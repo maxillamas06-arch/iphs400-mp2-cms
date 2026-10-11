@@ -1,6 +1,7 @@
 """Site export: the public site, written as static HTML from published content only.
 
-`cms publish` calls export_site(). Two rules the rubric checks:
+`cms publish` and the leader's site update call export_site(), which also records
+when it ran, for the dashboard. Two rules the rubric checks:
 
   1. Only PUBLISHED posts and pages are written. A draft that reaches the output
      is a bug.
@@ -19,7 +20,7 @@ from urllib.parse import quote
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from app import content, markdown, settings
+from app import content, db, markdown, settings
 from app.content import Page, Post
 from app.dates import spanish_date
 
@@ -43,7 +44,8 @@ def page_path(page: Page) -> str:
 
 
 def export_site(conn: sqlite3.Connection, out: Path) -> int:
-    """Wipe `out` and write the public site into it; returns how many posts it holds."""
+    """Wipe `out`, write the public site into it, and record when; returns how many
+    posts it holds."""
     posts = content.published_posts(conn)
     pages = content.published_pages(conn)
     topics = {key: TopicPage(name, f"tema/{content.slugify(name)}.html",
@@ -64,7 +66,17 @@ def export_site(conn: sqlite3.Connection, out: Path) -> int:
     for page in pages:
         _write(env, out, page_path(page), "public/page.html", page=page,
                body_html=markdown.to_html(page.body))
+    with conn:
+        conn.execute("INSERT INTO site_state (id, last_export_at) VALUES (1, ?)"
+                     " ON CONFLICT (id) DO UPDATE SET last_export_at = excluded.last_export_at",
+                     (db.now(),))
     return len(posts)
+
+
+def last_export(conn: sqlite3.Connection) -> str | None:
+    """When the public site was last exported, or None if it never was."""
+    row = conn.execute("SELECT last_export_at FROM site_state").fetchone()
+    return row["last_export_at"] if row else None
 
 
 def _environment(topics: list[TopicPage], menu: list[Page]) -> Environment:

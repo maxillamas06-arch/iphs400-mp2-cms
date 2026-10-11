@@ -68,6 +68,7 @@ templates.env.globals["may_submit_or_withdraw"] = policy.may_submit_or_withdraw
 templates.env.globals["may_change_post"] = policy.may_change_post
 templates.env.globals["may_propose_edit"] = policy.may_propose_edit
 templates.env.globals["may_manage_pages"] = policy.may_manage_pages
+templates.env.globals["may_update_site"] = policy.may_update_site
 
 
 async def require_csrf(request: Request) -> None:
