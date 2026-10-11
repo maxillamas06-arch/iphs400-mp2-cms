@@ -16,7 +16,7 @@ uv sync
 cp .env.example .env                  # optional: without it, .env.example is used
 uv run python scripts/seed_demo.py    # wipes and rebuilds cms.db with demo accounts
 uv run cms serve                      # then open http://localhost:8000/admin
-uv run cms publish                    # export the public site to site/ from published posts
+uv run cms publish                    # export the public site to site/ from published posts and pages
 python3 -m http.server -d site 8001   # preview it at http://localhost:8001
 uv run cms deploy                     # put site/ online (the gh-pages branch)
 ```
@@ -34,7 +34,10 @@ post by Furia del Cerro waiting for the leader's review (the *Esperando revisió
 leader's *Panel*), and one published post in each of the five topics, so the exported site has
 something in every section. Rayada de Corazón has also proposed changes to her published lineup
 post: the *Cambios propuestos* count on the *Panel* opens it, and the leader compares the two
-versions side by side before approving or sending them back.
+versions side by side before approving or sending them back. Last, the seed publishes the fan
+club's four pages, which the public menu lists in this order: *Quiénes somos*, *Próximos
+partidos*, *Reglas de la casa* and *Cómo unirse*. The leader manages them under *Páginas*;
+members never see them in the admin console.
 
 ## What is here
 

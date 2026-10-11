@@ -12,7 +12,7 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import db, settings
-from app.routes import auth, dashboard, posts, users
+from app.routes import auth, dashboard, pages, posts, users
 from app.web import (CsrfRejected, Forbidden, LoginRequired, NotFound, render,
                      require_csrf)
 
@@ -42,11 +42,13 @@ def create_app(database_path: Path | None = None) -> FastAPI:
 
     @app.exception_handler(NotFound)
     def not_found(request: Request, exc: NotFound):
-        return render(request, "admin/not_found.html", exc.user, status_code=404)
+        return render(request, "admin/not_found.html", exc.user, status_code=404,
+                      missing=exc.missing)
 
     app.include_router(auth.router)
     app.include_router(dashboard.router)
     app.include_router(posts.router)
+    app.include_router(pages.router)
     app.include_router(users.router)
 
     # The public site is the static export (ADR-001), not served here, so the

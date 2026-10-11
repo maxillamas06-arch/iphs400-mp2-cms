@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% block title %}Borrar página{% endblock %}
+{% block content %}
+  <h1>¿Borrar «{{ page.title }}»?</h1>
+  <p>Se borrará para siempre y saldrá del menú del sitio público con la próxima actualización del sitio. No se puede deshacer.</p>
+  <form method="post" action="{{ url_for('delete_page', page_id=page.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <div class="actions">
+      <button class="primary danger" type="submit">Sí, borrar</button>
+      <a href="{{ url_for('page', page_id=page.id) }}">No, volver</a>
+    </div>
+  </form>
+{% endblock %}

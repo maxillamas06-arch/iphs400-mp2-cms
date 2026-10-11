@@ -43,6 +43,22 @@ CREATE TABLE IF NOT EXISTS pending_edits (
     created_at TEXT    NOT NULL,
     updated_at TEXT    NOT NULL
 );
+
+-- The fan club's own pages, listed in the public menu by menu_order. Only the
+-- leader writes them, so they are never submitted.
+CREATE TABLE IF NOT EXISTS pages (
+    id                 INTEGER PRIMARY KEY,
+    title              TEXT    NOT NULL,
+    slug               TEXT    NOT NULL UNIQUE,
+    body               TEXT    NOT NULL,
+    status             TEXT    NOT NULL DEFAULT 'draft'
+                               CHECK (status IN ('draft', 'published')),
+    menu_order         INTEGER NOT NULL,
+    author_id          INTEGER NOT NULL REFERENCES users (id),
+    created_at         TEXT    NOT NULL,
+    updated_at         TEXT    NOT NULL,
+    first_published_at TEXT    -- set once, never cleared; locks the slug
+);
 """
 
 

@@ -1,4 +1,4 @@
-"""Content: posts, their slugs, and the post lifecycle.
+"""Content: posts, pages, their slugs, and the post lifecycle.
 
 Topics are a fixed list here, not a table: members cannot add topics.
 """
@@ -9,6 +9,7 @@ import sqlite3
 import unicodedata
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Literal
 
 from app import db
 from app.accounts import User
@@ -32,8 +33,19 @@ class Status(StrEnum):
 STATUS_NAMES = {Status.DRAFT: "Borrador", Status.SUBMITTED: "Enviada",
                 Status.PUBLISHED: "Publicada"}
 
+# The leader's content list filters posts vs pages: key -> the name people see.
+CONTENT_TYPES = {"post": "Publicaciones", "page": "Páginas"}
+
 SLUG_MAX = 80
 SLUG_FALLBACK = "publicación"  # for a title with no letters or digits at all
+# Pages are written at the site root, so a page may not take a name the site
+# already uses there. Each name -> what the site uses it for.
+RESERVED_PAGE_SLUGS = {"index": "la portada", "tema": "las páginas de los temas",
+                       "posts": "las publicaciones", "style": "el estilo del sitio"}
+
+
+# The tables whose rows have a slug and a status, named in the SQL built below.
+Table = Literal["posts", "pages"]
 
 
 class ContentError(ValueError):
@@ -71,6 +83,13 @@ UNPUBLISH = Transition(frozenset({Status.PUBLISHED}), Status.DRAFT,
                        "Solo se puede despublicar una publicación publicada.",
                        "No se puede despublicar mientras haya cambios propuestos sin revisar:"
                        " apruébalos o devuélvelos primero.")
+
+# Pages have no submitted step: only the leader writes them, and publishes them
+# straight from draft.
+PUBLISH_PAGE = Transition(frozenset({Status.DRAFT}), Status.PUBLISHED,
+                          "Esta página ya está publicada.")
+UNPUBLISH_PAGE = Transition(frozenset({Status.PUBLISHED}), Status.DRAFT,
+                            "Solo se puede despublicar una página publicada.")
 
 
 @dataclass(frozen=True)
@@ -140,6 +159,46 @@ class Post:
         return STATUS_NAMES[self.status]
 
 
+@dataclass(frozen=True)
+class PageFields:
+    """What the leader types into the page editor."""
+    title: str
+    body: str
+    menu_order: str
+    slug: str = ""
+
+    @property
+    def typed_slug(self) -> str:
+        """The slug as typed, NFC-normalized; empty when left for the title to make."""
+        return unicodedata.normalize("NFC", self.slug.strip())
+
+
+@dataclass(frozen=True)
+class Page:
+    """Fixed fan-club information shown in the public menu. Only the leader writes
+    pages, so a page is a draft or published, never submitted."""
+    id: int
+    title: str
+    slug: str
+    body: str
+    status: Status
+    menu_order: int  # the public menu lists published pages from the lowest up
+    author_id: int
+    author_nickname: str | None
+    created_at: str
+    updated_at: str
+    first_published_at: str | None  # set once, never cleared
+
+    @property
+    def slug_locked(self) -> bool:
+        """Once first published, the slug never changes: shared links keep working."""
+        return self.first_published_at is not None
+
+    @property
+    def status_name(self) -> str:
+        return STATUS_NAMES[self.status]
+
+
 def slugify(text: str) -> str:
     """NFC-normalized and lowercased; letters (accents and ñ included) and digits
     kept; every other run of characters becomes one hyphen; at most SLUG_MAX long."""
@@ -154,27 +213,30 @@ def _validate(fields: PostFields) -> None:
         raise ContentError("Elige uno de los cinco temas.")
 
 
-def _slug_for(conn: sqlite3.Connection, fields: PostFields, post: Post | None = None) -> str:
-    """The slug typed into the editor, or one made from the title when left empty.
-    A post first published keeps the slug it has."""
-    if post is not None and post.slug_locked:
-        if fields.typed_slug not in ("", post.slug):
-            raise ContentError("El enlace ya no se puede cambiar: la publicación ya se publicó"
+def _slug_for(conn: sqlite3.Connection, table: Table, fields: PostFields | PageFields,
+              item: Post | Page | None = None) -> str:
+    """The slug typed into the editor, or one made from the title when left empty,
+    free among the rows of `table` ("posts" or "pages"). A post or page first
+    published keeps the slug it has."""
+    if item is not None and item.slug_locked:
+        if fields.typed_slug not in ("", item.slug):
+            raise ContentError("El enlace ya no se puede cambiar: ya se publicó"
                                " y alguien pudo haber compartido su enlace.")
-        return post.slug
+        return item.slug
     wanted = fields.typed_slug or slugify(fields.title)
     if slugify(wanted) != wanted:
         raise ContentError("El enlace solo puede tener letras minúsculas, números y guiones"
                            f" sueltos, hasta {SLUG_MAX} caracteres. Por ejemplo:"
                            f" {slugify(wanted)}")
-    return _free_slug(conn, wanted, post.id if post else None)
+    return _free_slug(conn, table, wanted, item.id if item else None)
 
 
-def _free_slug(conn: sqlite3.Connection, wanted: str, post_id: int | None = None) -> str:
-    """`wanted`, or else `wanted-2`, `wanted-3`, …: the first that no other post uses."""
+def _free_slug(conn: sqlite3.Connection, table: Table, wanted: str,
+               item_id: int | None = None) -> str:
+    """`wanted`, or else `wanted-2`, `wanted-3`, …: the first no other row of `table` uses."""
     slug, number = wanted, 1
-    while conn.execute("SELECT 1 FROM posts WHERE slug = ? AND id IS NOT ?",
-                       (slug, post_id)).fetchone():
+    while conn.execute(f"SELECT 1 FROM {table} WHERE slug = ? AND id IS NOT ?",
+                       (slug, item_id)).fetchone():
         number += 1
         suffix = f"-{number}"
         slug = wanted[:SLUG_MAX - len(suffix)].rstrip("-") + suffix
@@ -204,7 +266,7 @@ def create_post(conn: sqlite3.Connection, author: User, fields: PostFields) -> P
     """A new draft written by `author`."""
     _validate(fields)
     now = db.now()
-    slug = _slug_for(conn, fields)
+    slug = _slug_for(conn, "posts", fields)
     with conn:
         cursor = conn.execute(
             "INSERT INTO posts (title, slug, body, topic, status, author_id,"
@@ -220,7 +282,7 @@ def save_post(conn: sqlite3.Connection, post: Post, fields: PostFields) -> Post:
     """Save: new title, topic, body and slug; the status stays as it is. Saving a
     published post (the leader's direct edit) marks it as edited after publishing."""
     _validate(fields)
-    slug = _slug_for(conn, fields, post)
+    slug = _slug_for(conn, "posts", fields, post)
     now = db.now()
     edited = now if post.status == Status.PUBLISHED else post.edited_at
     with conn:
@@ -241,7 +303,7 @@ def propose_edit(conn: sqlite3.Connection, post: Post, fields: PostFields) -> Po
     if post.status != Status.PUBLISHED:
         raise ContentError("Solo se pueden proponer cambios a una publicación publicada.")
     _validate(fields)
-    _slug_for(conn, fields, post)  # the slug is locked: a different one is refused
+    _slug_for(conn, "posts", fields, post)  # the slug is locked: a different one is refused
     now = db.now()
     with conn:
         conn.execute(
@@ -296,15 +358,21 @@ def move(conn: sqlite3.Connection, post: Post, transition: Transition) -> Post:
         raise ContentError(transition.refused)
     if post.pending_edit is not None and transition.refused_pending_edit:
         raise ContentError(transition.refused_pending_edit)
-    now = db.now()
-    first_published = post.first_published_at or (
-        now if transition.leads_to == Status.PUBLISHED else None)
-    with conn:
-        conn.execute("UPDATE posts SET status = ?, updated_at = ?, first_published_at = ?"
-                     " WHERE id = ?", (transition.leads_to, now, first_published, post.id))
+    _set_status(conn, "posts", post, transition.leads_to)
     moved = get_post(conn, post.id)
     assert moved is not None
     return moved
+
+
+def _set_status(conn: sqlite3.Connection, table: Table, item: Post | Page,
+                status: Status) -> None:
+    """Becoming published sets first-published the first time only."""
+    now = db.now()
+    first_published = item.first_published_at or (
+        now if status == Status.PUBLISHED else None)
+    with conn:
+        conn.execute(f"UPDATE {table} SET status = ?, updated_at = ?, first_published_at = ?"
+                     " WHERE id = ?", (status, now, first_published, item.id))
 
 
 def delete_post(conn: sqlite3.Connection, post: Post) -> None:
@@ -349,3 +417,116 @@ def list_posts(conn: sqlite3.Connection, status: Status | None = None,
                         {"status": status, "topic": topic,
                          "with_pending_edit": with_pending_edit}).fetchall()
     return [_post_from_row(row) for row in rows]
+
+
+def _validate_page(fields: PageFields) -> None:
+    if not fields.title.strip():
+        raise ContentError("Escribe un título.")
+    if not re.fullmatch(r"[0-9]{1,3}", fields.menu_order.strip()):
+        raise ContentError("El orden en el menú es un número entero del 0 al 999:"
+                           " el menú lista primero el número más bajo.")
+
+
+_SELECT_PAGES = ("SELECT pages.*, users.nickname AS author_nickname"
+                 " FROM pages JOIN users ON users.id = pages.author_id")
+
+
+def _page_from_row(row: sqlite3.Row) -> Page:
+    return Page(id=row["id"], title=row["title"], slug=row["slug"], body=row["body"],
+                status=Status(row["status"]), menu_order=row["menu_order"],
+                author_id=row["author_id"], author_nickname=row["author_nickname"],
+                created_at=row["created_at"], updated_at=row["updated_at"],
+                first_published_at=row["first_published_at"])
+
+
+def _page_slug_for(conn: sqlite3.Connection, fields: PageFields, page: Page | None = None) -> str:
+    """A post's slug rules, and never a name the site uses at its root."""
+    slug = _slug_for(conn, "pages", fields, page)
+    if slug in RESERVED_PAGE_SLUGS:
+        raise ContentError(f"El enlace «{slug}» ya lo usa el sitio para"
+                           f" {RESERVED_PAGE_SLUGS[slug]}: elige otro.")
+    return slug
+
+
+def create_page(conn: sqlite3.Connection, author: User, fields: PageFields) -> Page:
+    """A new draft page written by `author`, the leader."""
+    _validate_page(fields)
+    slug = _page_slug_for(conn, fields)
+    now = db.now()
+    with conn:
+        cursor = conn.execute(
+            "INSERT INTO pages (title, slug, body, status, menu_order, author_id,"
+            " created_at, updated_at) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?)",
+            (fields.title, slug, fields.body, int(fields.menu_order), author.id, now, now),
+        )
+    page = get_page(conn, cursor.lastrowid)
+    assert page is not None
+    return page
+
+
+def get_page(conn: sqlite3.Connection, page_id: int | None) -> Page | None:
+    row = conn.execute(f"{_SELECT_PAGES} WHERE pages.id = ?", (page_id,)).fetchone()
+    return _page_from_row(row) if row else None
+
+
+def save_page(conn: sqlite3.Connection, page: Page, fields: PageFields) -> Page:
+    """Save: new title, slug, body and menu order; the status stays as it is."""
+    _validate_page(fields)
+    slug = _page_slug_for(conn, fields, page)
+    with conn:
+        conn.execute("UPDATE pages SET title = ?, slug = ?, body = ?, menu_order = ?,"
+                     " updated_at = ? WHERE id = ?",
+                     (fields.title, slug, fields.body, int(fields.menu_order), db.now(),
+                      page.id))
+    saved = get_page(conn, page.id)
+    assert saved is not None
+    return saved
+
+
+def move_page(conn: sqlite3.Connection, page: Page, transition: Transition) -> Page:
+    """Publish or unpublish a page, refused unless its status allows it."""
+    if page.status not in transition.starts:
+        raise ContentError(transition.refused)
+    _set_status(conn, "pages", page, transition.leads_to)
+    moved = get_page(conn, page.id)
+    assert moved is not None
+    return moved
+
+
+def published_pages(conn: sqlite3.Connection) -> list[Page]:
+    """Every published page in menu order: the public menu, after Inicio."""
+    rows = conn.execute(f"{_SELECT_PAGES} WHERE pages.status = ?"
+                        " ORDER BY pages.menu_order, pages.id", (Status.PUBLISHED,)).fetchall()
+    return [_page_from_row(row) for row in rows]
+
+
+def delete_page(conn: sqlite3.Connection, page: Page) -> None:
+    with conn:
+        conn.execute("DELETE FROM pages WHERE id = ?", (page.id,))
+
+
+def list_pages(conn: sqlite3.Connection, status: Status | None = None) -> list[Page]:
+    """Every page, most recently updated first; only those in this status, when asked."""
+    rows = conn.execute(f"{_SELECT_PAGES} WHERE (:status IS NULL OR pages.status = :status)"
+                        " ORDER BY pages.updated_at DESC, pages.id DESC",
+                        {"status": status}).fetchall()
+    return [_page_from_row(row) for row in rows]
+
+
+def list_content(conn: sqlite3.Connection, status: Status | None = None,
+                 topic: str | None = None, with_pending_edit: bool = False,
+                 posts: bool = True, pages: bool = True) -> list[Post | Page]:
+    """Posts, pages or both, most recently updated first, filtered as list_posts()
+    filters. A page has no topic and never a pending edit, so either filter leaves
+    every page out."""
+    found: list[Post | Page] = []
+    if posts:
+        found += list_posts(conn, status, topic, with_pending_edit)
+    if pages and topic is None and not with_pending_edit:
+        found += list_pages(conn, status)
+    return sorted(found, key=lambda item: item.updated_at, reverse=True)
+
+
+def count_pages(conn: sqlite3.Connection) -> int:
+    """How many pages there are, drafts and published."""
+    return conn.execute("SELECT COUNT(*) FROM pages").fetchone()[0]

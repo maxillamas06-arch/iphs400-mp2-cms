@@ -18,11 +18,28 @@ LEADER_ONLY_ROUTES = frozenset({
     "pending_edit",    # GET  /admin/posts/{id}/pending-edit: published vs proposed
     "approve_edit",    # POST /admin/posts/{id}/pending-edit/approve
     "send_back_edit",  # POST /admin/posts/{id}/pending-edit/send-back
+    # Pages are the fan club's own voice: only the leader sees or writes them.
+    "new_page",        # GET  /admin/pages/new: the empty page editor
+    "create_page",     # POST /admin/pages/new
+    "preview_new_page",  # POST /admin/pages/new/preview
+    "page",            # GET  /admin/pages/{id}: the page editor
+    "save_page",       # POST /admin/pages/{id}
+    "preview_page",    # POST /admin/pages/{id}/preview
+    "publish_page",    # POST /admin/pages/{id}/publish
+    "unpublish_page",  # POST /admin/pages/{id}/unpublish
+    "confirm_delete_page",  # GET  /admin/pages/{id}/delete: are you sure?
+    "delete_page",     # POST /admin/pages/{id}/delete
 })
 
 
 def may_use_route(user: User, route_name: str | None) -> bool:
     return user.is_leader or route_name not in LEADER_ONLY_ROUTES
+
+
+def may_manage_pages(user: User) -> bool:
+    """See, write, publish and delete pages: the leader only. Pages are the fan
+    club's own voice, never submitted (ADR-003)."""
+    return user.is_leader
 
 
 def may_change_post(user: User, post: Post) -> bool:

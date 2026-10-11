@@ -4,11 +4,18 @@
   <h1>Hola, {{ user.nickname }}</h1>
   <p>Bienvenido al panel de {{ site_title }}.</p>
   <h2>Publicaciones</h2>
+  {# These count posts only, so each opens the content list filtered to posts. #}
   <dl class="counts">
     {% for status, label in [("draft", "Borradores"), ("submitted", "Esperando revisión"),
                              ("published", "Publicadas")] %}
-    <div><dt>{{ label }}</dt><dd><a href="{{ url_for('content').include_query_params(status=status) }}">{{ counts[status] }}</a></dd></div>
+    <div><dt>{{ label }}</dt><dd><a href="{{ url_for('content').include_query_params(type='post', status=status) }}">{{ counts[status] }}</a></dd></div>
     {% endfor %}
-    <div><dt>Cambios propuestos</dt><dd><a href="{{ url_for('content').include_query_params(pending=1) }}">{{ pending_edits }}</a></dd></div>
+    <div><dt>Cambios propuestos</dt><dd><a href="{{ url_for('content').include_query_params(type='post', pending=1) }}">{{ pending_edits }}</a></dd></div>
   </dl>
+  {% if pages is not none %}
+  <h2>Páginas</h2>
+  <dl class="counts">
+    <div><dt>Páginas</dt><dd><a href="{{ url_for('content').include_query_params(type='page') }}">{{ pages }}</a></dd></div>
+  </dl>
+  {% endif %}
 {% endblock %}

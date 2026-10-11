@@ -13,6 +13,7 @@ the way a browser would.
 """
 from __future__ import annotations
 
+import html
 import os
 import re
 import subprocess
@@ -151,6 +152,22 @@ def write_post(csrf_token):
 
 
 @pytest.fixture
+def write_page(csrf_token):
+    """Return a function: write_page(client, title=..., body=..., menu_order=..., slug=...)
+    -> the (unfollowed) response to creating that page with the page editor's form."""
+
+    def _write(c: TestClient, title: str = "Quiénes somos",
+               body: str = "Somos aficionados de **Rayados**.", menu_order: str = "1",
+               slug: str = ""):
+        return c.post("/admin/pages/new",
+                      data={"csrf_token": csrf_token(c), "title": title, "body": body,
+                            "menu_order": menu_order, "slug": slug},
+                      follow_redirects=False)
+
+    return _write
+
+
+@pytest.fixture
 def propose_edit(csrf_token):
     """Return a function: propose_edit(client, post_url, title=..., topic=..., body=...,
     slug=...) -> the (unfollowed) response to a member saving changes to their
@@ -195,6 +212,21 @@ def published_post(client_as, write_post, take_action, clock):
         if day is not None:
             clock.time = f"2026-10-{day:02d}T18:00:00+00:00"
         take_action(clients["admin"], url, "publish")
+        return url
+
+    return _published
+
+
+@pytest.fixture
+def published_page(client_as, write_page, take_action):
+    """Return a function: published_page(**page) -> the admin URL of a page the leader
+    wrote and published. `page` takes write_page's fields."""
+    clients: dict[str, TestClient] = {}
+
+    def _published(**page: str) -> str:
+        leader = clients.setdefault("admin", client_as("admin"))
+        url = write_page(leader, **page).headers["location"]
+        take_action(leader, url, "publish")
         return url
 
     return _published
@@ -278,8 +310,11 @@ def dashboard_counts():
         return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).strip()
 
     def _counts(c: TestClient) -> dict[str, tuple[str, str]]:
-        return {_text(label): (_text(number), href) for label, href, number in re.findall(
-            r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)">(.*?)</a></dd>', c.get("/admin").text, re.S)}
+        found = re.findall(r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)">(.*?)</a></dd>',
+                           c.get("/admin").text, re.S)
+        # A browser reads "&amp;" in an href as "&".
+        return {_text(label): (_text(number), html.unescape(href))
+                for label, href, number in found}
 
     return _counts
 

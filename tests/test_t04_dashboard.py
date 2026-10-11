@@ -4,6 +4,7 @@ Each test name says which acceptance criterion of #5 it covers.
 """
 from __future__ import annotations
 
+import html
 import re
 
 
@@ -23,7 +24,7 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
     ana, beto, leader = client_as("editor"), client_as("editor2"), client_as("admin")
     assert counts(leader.get("/admin").text) == {
         "Borradores": "0", "Esperando revisión": "0", "Publicadas": "0",
-        "Cambios propuestos": "0"}
+        "Cambios propuestos": "0", "Páginas": "0"}  # T06 (#7): pages, for the leader only
 
     write_post(ana, title="Borrador de Ana")
     write_post(leader, title="Borrador del Capi", topic="fan-club-news")
@@ -31,10 +32,10 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
         take_action(c, write_post(c, title=title).headers["location"], "submit")
     published_post(title="Ya publicada")
 
-    for viewer in (leader, ana):
-        assert counts(viewer.get("/admin").text) == {
-            "Borradores": "2", "Esperando revisión": "2", "Publicadas": "1",
-            "Cambios propuestos": "0"}
+    expected = {"Borradores": "2", "Esperando revisión": "2", "Publicadas": "1",
+                "Cambios propuestos": "0"}
+    assert counts(ana.get("/admin").text) == expected
+    assert counts(leader.get("/admin").text) == expected | {"Páginas": "0"}
 
 
 def selected(html: str, name: str) -> str:
@@ -81,11 +82,13 @@ def test_each_dashboard_count_opens_the_content_list_filtered_to_that_status(
     write_post(ana, title="Borrador de Ana")
     take_action(ana, write_post(ana, title="Enviada por Ana").headers["location"], "submit")
 
-    links = {text(label): href for label, href in re.findall(
+    links = {text(label): html.unescape(href) for label, href in re.findall(
         r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)"', leader.get("/admin").text, re.S)}
 
-    # T05 (#6) adds Cambios propuestos, which opens posts with a pending edit.
-    assert set(links) == {"Borradores", "Esperando revisión", "Publicadas", "Cambios propuestos"}
+    # T05 (#6) adds Cambios propuestos, which opens posts with a pending edit;
+    # T06 (#7) adds Páginas, which opens the pages.
+    assert set(links) == {"Borradores", "Esperando revisión", "Publicadas", "Cambios propuestos",
+                          "Páginas"}
     queue = leader.get(links["Esperando revisión"]).text
     assert [row[0] for row in cells(queue) if row] == ["Enviada por Ana"]
     drafts = leader.get(links["Borradores"]).text

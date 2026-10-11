@@ -13,6 +13,8 @@
       <a class="site-name" href="{{ href('index.html') }}">{{ site_title }}</a>
       <nav class="menu" aria-label="Menú">
         <a href="{{ href('index.html') }}">Inicio</a>
+        {% for menu_page in menu %}<a href="{{ href(page_path(menu_page)) }}">{{ menu_page.title }}</a>
+        {% endfor %}
       </nav>
     </div>
     <nav class="topics" aria-label="Temas">

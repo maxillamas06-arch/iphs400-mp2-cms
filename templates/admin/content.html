@@ -1,9 +1,26 @@
 {% extends "admin/base.html" %}
-{% block title %}Publicaciones{% endblock %}
+{% set heading = types[type] if type
+                 else "Publicaciones y páginas" if may_manage_pages(user) else "Publicaciones" %}
+{% set none_match = "Ninguna página coincide" if type == "page" else "Ninguna publicación coincide" %}
+{% block title %}{{ heading }}{% endblock %}
 {% block content %}
-  <h1>Publicaciones</h1>
-  <p><a class="button" href="{{ url_for('new_post') }}">Nueva publicación</a></p>
+  <h1>{{ heading }}</h1>
+  <p class="actions">
+    <a class="button" href="{{ url_for('new_post') }}">Nueva publicación</a>
+    {% if may_manage_pages(user) %}<a class="button" href="{{ url_for('new_page') }}">Nueva página</a>{% endif %}
+  </p>
   <form class="filters" method="get" action="{{ url_for('content') }}">
+    {% if may_manage_pages(user) %}
+    <div>
+      <label for="type">Tipo</label>
+      <select id="type" name="type">
+        <option value="">Publicaciones y páginas</option>
+        {% for key, name in types.items() %}
+        <option value="{{ key }}"{% if type == key %} selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div>
       <label for="status">Estado</label>
       <select id="status" name="status">
@@ -27,27 +44,34 @@
     </div>
     <button type="submit">Filtrar</button>
   </form>
-  {% if posts %}
+  {% if items %}
   <div class="table-wrap">
     <table>
       <thead>
         <tr><th>Título</th><th>Tema</th><th>Apodo</th><th>Estado</th><th>Última actualización</th></tr>
       </thead>
       <tbody>
-        {% for post in posts %}
+        {% for item in items %}
         <tr>
-          <td><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></td>
-          <td>{{ post.topic_name }}</td>
-          <td>{{ post.author_nickname or "—" }}</td>
-          <td>{{ post.status_name }}</td>
-          <td>{{ post.updated_at | monterrey_time }}</td>
+          {% if item is page %}
+          <td><a href="{{ url_for('page', page_id=item.id) }}">{{ item.title }}</a></td>
+          <td>Página</td>
+          {% else %}
+          <td><a href="{{ url_for('post', post_id=item.id) }}">{{ item.title }}</a></td>
+          <td>{{ item.topic_name }}</td>
+          {% endif %}
+          <td>{{ item.author_nickname or "—" }}</td>
+          <td>{{ item.status_name }}</td>
+          <td>{{ item.updated_at | monterrey_time }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
   {% elif status or topic or pending %}
-  <p>Ninguna publicación coincide con estos filtros.</p>
+  <p>{{ none_match }} con estos filtros.</p>
+  {% elif type == "page" %}
+  <p>Todavía no hay páginas.</p>
   {% else %}
   <p>Todavía no hay publicaciones.</p>
   {% endif %}

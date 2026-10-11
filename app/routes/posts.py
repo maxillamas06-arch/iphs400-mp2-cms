@@ -1,16 +1,16 @@
-"""Posts: the content list and the post editor."""
+"""The content list (posts, and for the leader pages too) and the post editor."""
 from __future__ import annotations
 
 import sqlite3
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse
 
 from app import content, markdown, policy
 from app.accounts import User
 from app.content import PendingEdit, Post, PostFields, Status
-from app.web import Forbidden, NotFound, flash, get_db, render, signed_in_user
+from app.web import Forbidden, NotFound, flash, get_db, render, saved_message, signed_in_user
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(signed_in_user)])
 
@@ -89,26 +89,26 @@ def render_post_page(request: Request, user: User, post: Post, status_code: int 
                             **context)
 
 
-def saved_message(message: str, fields: PostFields, saved: Post) -> str:
-    """The save message, saying so when the typed slug was taken and got a number."""
-    if fields.typed_slug and fields.typed_slug != saved.slug:
-        return (f"{message} El enlace «{fields.typed_slug}» ya era de otra publicación:"
-                f" quedó «{saved.slug}».")
-    return message
-
-
 @router.get("/content", name="content")
 def content_list(request: Request, status: str = "", topic: str = "", pending: str = "",
+                 content_type: str = Query("", alias="type"),
                  user: User = Depends(signed_in_user),
                  conn: sqlite3.Connection = Depends(get_db)):
-    # A filter value the list does not offer is no filter at all.
+    # A filter value the list does not offer is no filter at all. Only the leader
+    # is offered pages, so only the leader may filter posts vs pages.
     chosen_status = Status(status) if status in content.STATUS_NAMES else None
     chosen_topic = topic if topic in content.TOPICS else None
     with_pending_edit = pending == "1"
-    return render(request, "admin/content.html", user,
-                  posts=content.list_posts(conn, chosen_status, chosen_topic, with_pending_edit),
+    sees_pages = policy.may_manage_pages(user)
+    chosen_type = (content_type if sees_pages and content_type in content.CONTENT_TYPES
+                   else None)
+    items = content.list_content(conn, chosen_status, chosen_topic, with_pending_edit,
+                                 posts=chosen_type != "page",
+                                 pages=sees_pages and chosen_type != "post")
+    return render(request, "admin/content.html", user, items=items,
                   status=chosen_status, topic=chosen_topic, pending=with_pending_edit,
-                  statuses=content.STATUS_NAMES, topics=content.TOPICS)
+                  type=chosen_type, statuses=content.STATUS_NAMES, topics=content.TOPICS,
+                  types=content.CONTENT_TYPES)
 
 
 @router.get("/posts/new", name="new_post")
@@ -125,7 +125,7 @@ def create_post(request: Request, fields: PostFields = Depends(post_fields),
     except content.ContentError as refused:
         return render_post_form(request, user, None, fields, status_code=400,
                                 error=str(refused))
-    flash(request, saved_message("Borrador guardado.", fields, post))
+    flash(request, saved_message("Borrador guardado.", fields, post, "otra publicación"))
     return RedirectResponse(request.app.url_path_for("post", post_id=post.id), status_code=303)
 
 
@@ -151,7 +151,7 @@ def save_post(request: Request, post: Post = Depends(changeable_post),
     except content.ContentError as refused:
         return render_post_form(request, user, post, fields, status_code=400,
                                 error=str(refused))
-    flash(request, saved_message("Cambios guardados.", fields, saved))
+    flash(request, saved_message("Cambios guardados.", fields, saved, "otra publicación"))
     return RedirectResponse(request.app.url_path_for("post", post_id=post.id), status_code=303)
 
 

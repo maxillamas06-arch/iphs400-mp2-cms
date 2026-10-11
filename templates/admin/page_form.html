@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+{% set heading = page.title if page else "Nueva página" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+  <h1>{{ heading }}</h1>
+  {% if page %}
+  <p class="meta">
+    Página · {{ page.status_name }} · de {{ page.author_nickname or "—" }} ·
+    Creada: {{ page.created_at | monterrey_time }} ·
+    Última actualización: {{ page.updated_at | monterrey_time }}
+    {%- if page.first_published_at %} ·
+    Publicada por primera vez: {{ page.first_published_at | monterrey_time }}{% endif %}
+  </p>
+  {% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('save_page', page_id=page.id) if page else url_for('create_page') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="title">Título</label>
+    <input id="title" name="title" type="text" value="{{ form.title }}" required>
+    <label for="slug">Enlace</label>
+    {% if page and page.slug_locked %}
+    <input id="slug" name="slug" type="text" value="{{ page.slug }}" readonly aria-describedby="slug-help">
+    <p id="slug-help" class="help">Quedó fijo cuando se publicó por primera vez, para que los enlaces compartidos sigan funcionando.</p>
+    {% else %}
+    <input id="slug" name="slug" type="text" value="{{ form.slug }}" placeholder="Se crea a partir del título" aria-describedby="slug-help">
+    <p id="slug-help" class="help">Solo letras minúsculas, números y guiones. Puedes cambiarlo hasta que la publiques por primera vez; después queda fijo para que los enlaces compartidos sigan funcionando.</p>
+    {% endif %}
+    <label for="menu_order">Orden en el menú</label>
+    <input id="menu_order" name="menu_order" type="text" inputmode="numeric" value="{{ form.menu_order }}" required aria-describedby="menu-order-help">
+    <p id="menu-order-help" class="help">Un número del 0 al 999. El menú del sitio público lista primero el número más bajo.</p>
+    <label for="body">Texto (Markdown)</label>
+    <textarea id="body" name="body" rows="14">{{ form.body }}</textarea>
+    <div class="actions">
+      <button class="primary" type="submit">
+        {%- if not page or page.status == "draft" %}Guardar borrador{% else %}Guardar cambios{% endif -%}
+      </button>
+      <button type="submit" formaction="{{ url_for('preview_page', page_id=page.id) if page else url_for('preview_new_page') }}">Vista previa</button>
+      {% if page %}<a class="danger" href="{{ url_for('confirm_delete_page', page_id=page.id) }}">Borrar</a>{% endif %}
+    </div>
+  </form>
+  {% if page and page.status == "published" %}
+  <form class="lifecycle" method="post" action="{{ url_for('unpublish_page', page_id=page.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Está publicada y aparece en el menú del sitio público. Si la despublicas vuelve a ser borrador, y desaparece del sitio público con la próxima actualización del sitio.</p>
+    <button type="submit">Despublicar</button>
+  </form>
+  {% elif page %}
+  <form class="lifecycle" method="post" action="{{ url_for('publish_page', page_id=page.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Se publica la versión guardada: guarda antes tus cambios. Aparecerá en el menú del sitio público después de la próxima actualización del sitio, y desde entonces el enlace queda fijo.</p>
+    <button class="primary" type="submit">Publicar</button>
+  </form>
+  {% endif %}
+  {% if preview_html is defined %}
+  <section class="preview" aria-label="Vista previa">
+    <h2>Vista previa</h2>
+    <p class="help">Así la verán los lectores. Todavía no se ha guardado.</p>
+    <div class="preview-body">{{ preview_html | safe }}</div>
+  </section>
+  {% endif %}
+{% endblock %}

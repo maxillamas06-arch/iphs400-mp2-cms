@@ -1,7 +1,7 @@
 """The `cms` command: serve, publish, deploy.
 
     uv run cms serve      # admin console at http://localhost:8000/admin
-    uv run cms publish    # export site/ from published posts
+    uv run cms publish    # export site/ from published posts and pages
     uv run cms deploy     # push site/ to the gh-pages branch (Pages serves it)
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     serve = sub.add_parser("serve", help="run the admin console locally")
     serve.add_argument("--port", type=int, default=8000)
     serve.add_argument("--reload", action="store_true", default=True)
-    sub.add_parser("publish", help="export site/ from published posts")
+    sub.add_parser("publish", help="export site/ from published posts and pages")
     deploy = sub.add_parser("deploy", help="push site/ to gh-pages")
     deploy.add_argument("--message", default="Publish site")
     args = parser.parse_args(argv)

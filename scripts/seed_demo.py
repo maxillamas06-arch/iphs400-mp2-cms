@@ -5,7 +5,8 @@
 
 Wipes the database at CMS_DATABASE and creates the leader, two members, a
 member's draft post, a member's post submitted for review, one published post
-in each topic, and a member's pending edit to one of them.
+in each topic, a member's pending edit to one of them, and the fan club's four
+pages, published, in menu order.
 Passwords come from CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD (read from .env,
 or from .env.example on a fresh clone); they are never printed.
 """
@@ -17,7 +18,7 @@ from contextlib import closing
 from dataclasses import replace
 
 from app import accounts, content, db, settings
-from app.content import PostFields
+from app.content import PageFields, PostFields
 
 # (email, nickname, role, environment variable holding the password).
 # tests/conftest.py uses the same emails and nicknames.
@@ -129,6 +130,71 @@ PUBLISHED = [
 ]
 
 
+# The fan club's own pages, written by the leader and published, in menu order.
+PAGES = [
+    PageFields(
+        title="Quiénes somos",
+        menu_order="1",
+        body=(
+            "Somos el **Club de Aficionados Albiazul**: aficionados de Rayados que nos"
+            " juntamos a ver los partidos, a cantar y a opinar. No somos Rayados ni"
+            " hablamos por el equipo: somos fans, nada más y nada menos.\n\n"
+            "Aquí los miembros escriben lo que piensan del equipo (el partido, la"
+            " alineación, el técnico, los fichajes) y el líder del club de aficionados"
+            " revisa cada publicación antes de que salga al sitio.\n"
+        ),
+    ),
+    PageFields(
+        title="Próximos partidos",
+        menu_order="2",
+        body=(
+            "Así nos organizamos para los próximos partidos. El líder actualiza esta"
+            " página cada semana.\n\n"
+            "- **Clásico Regio:** watch party del club de aficionados. El lugar se avisa"
+            " por mensaje a cada miembro.\n"
+            "- **Partidos en casa:** nos vemos en la cabecera norte, con jersey y bandera.\n"
+            "- **Partidos de visita:** los vemos juntos donde siempre; llega una hora antes.\n\n"
+            "Los horarios oficiales los publica Rayados; aquí solo te decimos dónde nos"
+            " juntamos.\n"
+        ),
+    ),
+    PageFields(
+        title="Reglas de la casa",
+        menu_order="3",
+        body=(
+            "El líder revisa cada publicación antes de que salga al sitio, y la revisa con"
+            " estas reglas.\n\n"
+            "## Se vale: la tiradera\n\n"
+            "La tiradera a un club rival o a su afición (a Tigres, sobre todo) es parte de"
+            " ser aficionado. Búrlate del rival, de su racha o de su estadio todo lo que"
+            " quieras.\n\n"
+            "## Nunca: el ataque personal\n\n"
+            "Un ataque personal es una agresión contra una persona real (un jugador, un"
+            " árbitro, un aficionado, un periodista) o una amenaza contra una persona o un"
+            " lugar. No se publica nunca, se diga como se diga, ni aunque sea «de broma».\n\n"
+            "## Cómo se aplican\n\n"
+            "- Si una publicación cruza la línea, el líder la devuelve a quien la escribió"
+            " para que la corrija.\n"
+            "- Quien insista en los ataques personales pierde su cuenta.\n"
+        ),
+    ),
+    PageFields(
+        title="Cómo unirse",
+        menu_order="4",
+        body=(
+            "Para escribir en el sitio necesitas una cuenta, y las cuentas las crea el líder"
+            " del club de aficionados.\n\n"
+            "1. Escribe a [unete@albiazul.example](mailto:unete@albiazul.example) con tu"
+            " nombre y desde cuándo le vas a Rayados.\n"
+            "2. El líder te responde con tu correo de acceso y una contraseña temporal.\n"
+            "3. La primera vez que entres eliges tu apodo: es el nombre que verán los"
+            " lectores en tus publicaciones.\n\n"
+            "Antes de escribir, lee las reglas de la casa.\n"
+        ),
+    ),
+]
+
+
 def main() -> int:
     missing = sorted({var for *_, var in DEMO_USERS if not os.environ.get(var)})
     if missing:
@@ -152,13 +218,17 @@ def main() -> int:
                                 content.PUBLISH)
             if fields is LINEUP:
                 content.propose_edit(conn, post, PENDING_EDIT)
+        for page_fields in PAGES:
+            page = content.create_page(conn, users["lider@albiazul.example"], page_fields)
+            content.move_page(conn, page, content.PUBLISH_PAGE)
 
     print(f"Rebuilt {path} with these demo accounts:")
     for email, nickname, role, var in DEMO_USERS:
         print(f"  {email:<26} {role:<7} {nickname}  (password: ${var})")
     print(f"one draft post ({DRAFT.title}), one post waiting for review ({SUBMITTED.title}),"
-          f" {len(PUBLISHED)} published posts, one per topic, and a pending edit to"
-          f" {LINEUP.title}. Run `uv run cms publish` to export them to site/.")
+          f" {len(PUBLISHED)} published posts, one per topic, a pending edit to"
+          f" {LINEUP.title}, and {len(PAGES)} published pages for the menu."
+          " Run `uv run cms publish` to export them to site/.")
     return 0
 
 

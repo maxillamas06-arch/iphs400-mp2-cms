@@ -55,6 +55,7 @@
     <nav class="menu" aria-label="Menú de administración">
       <a href="{{ url_for('dashboard') }}">Panel</a>
       <a href="{{ url_for('content') }}">Publicaciones</a>
+      {% if may_manage_pages(user) %}<a href="{{ url_for('content').include_query_params(type='page') }}">Páginas</a>{% endif %}
       {% if user.is_leader %}<a href="{{ url_for('users') }}">Cuentas</a>{% endif %}
       <span>{{ user.nickname }}</span>
       <form method="post" action="{{ url_for('logout') }}">

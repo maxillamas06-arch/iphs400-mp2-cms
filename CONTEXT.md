@@ -39,7 +39,7 @@ A fan's opinion about the team, written by a member (or the leader) and filed un
 _Avoid_: Article, story, news item, entry; "la publicación de …" to mean publishing
 
 **Slug** (*Enlace*):
-The end of a post's web address, made from its title (`crónica-del-clásico-regio`). It can be changed until the post is first published, then never, so links shared on X or Facebook keep working.
+The end of a post's or page's web address, made from its title (`crónica-del-clásico-regio`). It can be changed until the post or page is first published, then never, so links shared on X or Facebook keep working. A page's slug can never be a name the site already uses for itself (the home page, the topic pages).
 _Avoid_: URL, permalink, path
 
 **Preview** (*Vista previa*):
@@ -50,9 +50,13 @@ _Avoid_: Draft view, render
 The one fixed subject a post is filed under: **Match** (*Partido*), **Lineup** (*Alineación*), **Coach** (*Técnico*), **Signings** (*Fichajes*), or **Fan club news** (*Noticias del club de aficionados*). Readers see the Spanish names. The list is fixed; members cannot add topics.
 _Avoid_: Category, tag, section, kind
 
-**Page**:
-Fixed fan-club information shown in the public menu: *Quiénes somos*, *Próximos partidos*, *Reglas de la casa*, *Cómo unirse*. The fan club's own voice, not an opinion; only the leader writes pages, and they are never submitted.
+**Page** (*Página*):
+Fixed fan-club information shown in the public menu: *Quiénes somos*, *Próximos partidos*, *Reglas de la casa*, *Cómo unirse*. The fan club's own voice, not an opinion; only the leader writes pages, and they are never submitted. A page is a draft until the leader publishes it; unpublishing takes it back out of the menu at the next site update. Members never see pages in the admin console.
 _Avoid_: Section, static page, menu item
+
+**Menu order** (*Orden en el menú*):
+The number the leader gives each page. The public menu lists *Inicio*, then the published pages from the lowest number up.
+_Avoid_: Position, weight, rank
 
 **Fan club news**:
 The topic for the fan club's own announcements (watch parties, meetups), usually written by the leader. Never official news about Rayados.
