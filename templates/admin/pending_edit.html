@@ -4,6 +4,9 @@
   <h1>Cambios propuestos a «{{ post.title }}»</h1>
   <p class="meta">De {{ post.author_nickname or "—" }} · propuestos el {{ edit.updated_at | monterrey_time }}</p>
   <p class="help">Cada versión se ve como la verán los lectores. El enlace no cambia.</p>
+  {% if post.edited_since_pending_edit %}
+  <p class="error" role="alert">La versión publicada se editó directamente después de que se propusieron estos cambios. Si los apruebas, la reemplazan completa y esa edición se pierde: compara las dos columnas antes de decidir.</p>
+  {% endif %}
   <div class="side-by-side">
     <section class="version" aria-label="Versión publicada">
       <h2>Versión publicada</h2>

@@ -265,3 +265,23 @@ def test_member_previews_changes_to_own_published_post_without_proposing_them(
     preview = section(response.text, "Vista previa")
     assert "<strong>3-1</strong>" in preview and "<script" not in preview
     assert dashboard_counts(leader)["Cambios propuestos"][0] == "0", "nothing was proposed"
+
+
+EDITED_SINCE = "La versión publicada se editó directamente después de que se propusieron estos cambios"
+
+
+def test_review_warns_before_approving_would_replace_a_direct_edit_made_after_the_proposal(
+        client_as, published_post, propose_edit, csrf_token, clock):
+    ana, leader = client_as("editor"), client_as("admin")
+    url = published_post(**PUBLISHED)
+    propose_edit(ana, url, **PROPOSED)
+    assert EDITED_SINCE not in leader.get(f"{url}/pending-edit").text
+    clock.time = "2026-10-06T18:00:00+00:00"
+
+    leader.post(url, data={"csrf_token": csrf_token(leader, url), **PUBLISHED,
+                           "body": "Ganamos 3-1 en casa (typo corregido)."})
+    propose_edit(ana, url, **PROPOSED)  # her proposal still starts from before the fix
+
+    review = leader.get(f"{url}/pending-edit").text
+    assert EDITED_SINCE in review
+    assert "(typo corregido)" in section(review, "Versión publicada")

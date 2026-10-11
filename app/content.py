@@ -119,6 +119,14 @@ class Post:
     pending_edit: PendingEdit | None  # at most one, only while published
 
     @property
+    def edited_since_pending_edit(self) -> bool:
+        """The published version was edited directly after its pending edit was
+        first proposed, so approving the edit would also undo that edit. (Stored
+        times share one UTC format, so they compare as text.)"""
+        return (self.pending_edit is not None and self.edited_at is not None
+                and self.edited_at > self.pending_edit.created_at)
+
+    @property
     def slug_locked(self) -> bool:
         """Once first published, the slug never changes: shared links keep working."""
         return self.first_published_at is not None
