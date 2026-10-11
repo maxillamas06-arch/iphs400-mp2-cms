@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block title %}Elige tu apodo{% endblock %}
+{% block content %}
+  <h1>Elige tu apodo</h1>
+  <p>Es el nombre que los lectores verán en tus publicaciones. Lo eliges una sola vez: después solo el líder puede cambiarlo.</p>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('choose_nickname') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="nickname">Apodo</label>
+    <input id="nickname" name="nickname" type="text" value="{{ nickname }}" maxlength="40" required>
+    <p class="help">De 2 a 40 caracteres. Nadie más puede tener el mismo.</p>
+    <button class="primary" type="submit">Guardar apodo</button>
+  </form>
+{% endblock %}

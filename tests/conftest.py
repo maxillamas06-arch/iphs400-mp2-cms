@@ -184,6 +184,46 @@ def propose_edit(csrf_token):
 
 
 @pytest.fixture
+def create_account(csrf_token):
+    """Return a function: create_account(leader, email=..., role=..., password=...) ->
+    the (unfollowed) response to the leader creating that account with the form."""
+
+    def _create(c: TestClient, email: str = "carla@albiazul.example", role: str = "editor",
+                password: str = "albiazul"):
+        return c.post("/admin/users/new",
+                      data={"csrf_token": csrf_token(c, "/admin/users/new"), "email": email,
+                            "role": role, "password": password},
+                      follow_redirects=False)
+
+    return _create
+
+
+@pytest.fixture
+def account_url():
+    """Return a function: account_url(leader, email) -> the admin URL of that account,
+    found by its email in the list of accounts."""
+
+    def _url(c: TestClient, email: str) -> str:
+        match = re.search(rf'<a href="([^"]+)">{re.escape(email)}</a>', c.get("/admin/users").text)
+        assert match, f"no link to {email} in the list of accounts"
+        return match.group(1)
+
+    return _url
+
+
+@pytest.fixture
+def account_action(csrf_token):
+    """Return a function: account_action(leader, account_url, "role", role="admin") ->
+    the (unfollowed) response to that form on the account's screen."""
+
+    def _act(c: TestClient, url: str, action: str, **fields: str):
+        return c.post(f"{url}/{action}", data={"csrf_token": csrf_token(c, url), **fields},
+                      follow_redirects=False)
+
+    return _act
+
+
+@pytest.fixture
 def take_action(csrf_token):
     """Return a function: take_action(client, post_url, "publish") -> the (unfollowed)
     response to that lifecycle action's button on the post's page."""

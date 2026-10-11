@@ -53,11 +53,15 @@
     <strong>{{ site_title }}</strong>
     {% if user %}
     <nav class="menu" aria-label="Menú de administración">
+      {# Until they choose a nickname, every other screen sends them back to it. #}
+      {% if user.nickname %}
       <a href="{{ url_for('dashboard') }}">Panel</a>
       <a href="{{ url_for('content') }}">Publicaciones</a>
       {% if may_manage_pages(user) %}<a href="{{ url_for('content').include_query_params(type='page') }}">Páginas</a>{% endif %}
-      {% if user.is_leader %}<a href="{{ url_for('users') }}">Cuentas</a>{% endif %}
+      {% if may_manage_accounts(user) %}<a href="{{ url_for('users') }}">Cuentas</a>{% endif %}
+      <a href="{{ url_for('account') }}">Mi cuenta</a>
       <span>{{ user.nickname }}</span>
+      {% endif %}
       <form method="post" action="{{ url_for('logout') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
         <button type="submit">Salir</button>

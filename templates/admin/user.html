@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% set own = account.id == user.id %}
+{% block title %}Cuenta de {{ account.email }}{% endblock %}
+{% block content %}
+  <h1>{{ account.email }}</h1>
+  <p class="meta">
+    Apodo: {{ account.nickname or "todavía no lo elige" }} ·
+    {{ role_names[account.role] }} ·
+    {{ "Activa" if account.active else "Desactivada: no puede entrar" }}
+  </p>
+  {% if own %}<p class="help">Es tu cuenta. No puedes cambiar tu propio rol ni desactivarte, para que nunca te quedes fuera.</p>{% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+  <h2>Apodo</h2>
+  <form method="post" action="{{ url_for('set_nickname', account_id=account.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="nickname">Apodo</label>
+    <input id="nickname" name="nickname" type="text" value="{{ account.nickname or '' }}" maxlength="40" required>
+    <p class="help">De 2 a 40 caracteres. Nadie más puede tener el mismo.</p>
+    <button type="submit">Cambiar apodo</button>
+  </form>
+
+  {% if not own %}
+  <h2>Rol</h2>
+  <form method="post" action="{{ url_for('change_role', account_id=account.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="role">Rol</label>
+    <select id="role" name="role">
+      {% for key, name in role_names.items() %}
+      <option value="{{ key }}"{% if account.role == key %} selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <p class="help">Un líder puede hacer todo: publicar, escribir páginas y administrar cuentas.</p>
+    <button type="submit">Cambiar rol</button>
+  </form>
+  {% endif %}
+
+  <h2>Contraseña temporal</h2>
+  <form method="post" action="{{ url_for('set_temporary_password', account_id=account.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="password">Nueva contraseña temporal</label>
+    <input id="password" name="password" type="text" minlength="8" autocomplete="off" required>
+    <p class="help">Al menos 8 caracteres. Dásela en persona; después puede cambiarla en <em>Mi cuenta</em>.</p>
+    <button type="submit">Guardar contraseña temporal</button>
+  </form>
+
+  {% if not account.active %}
+  <h2>Cuenta desactivada</h2>
+  <form method="post" action="{{ url_for('reactivate_user', account_id=account.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Si la reactivas, puede volver a entrar con su contraseña.</p>
+    <button type="submit">Reactivar cuenta</button>
+  </form>
+  {% elif not own %}
+  <h2>Desactivar</h2>
+  <form method="post" action="{{ url_for('deactivate_user', account_id=account.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Ya no podrá entrar. Nada se borra: sus publicaciones siguen donde estaban, y puedes reactivarla cuando quieras.</p>
+    <button class="danger" type="submit">Desactivar cuenta</button>
+  </form>
+  {% endif %}
+
+  <p><a href="{{ url_for('users') }}">Volver a las cuentas</a></p>
+{% endblock %}

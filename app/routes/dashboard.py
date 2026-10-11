@@ -5,7 +5,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, Request
 
-from app import content, policy
+from app import accounts, content, policy
 from app.accounts import User
 from app.web import get_db, render, signed_in_user
 
@@ -18,4 +18,6 @@ def dashboard(request: Request, user: User = Depends(signed_in_user),
     return render(request, "admin/dashboard.html", user,
                   counts=content.count_by_status(conn),
                   pending_edits=content.count_pending_edits(conn),
-                  pages=content.count_pages(conn) if policy.may_manage_pages(user) else None)
+                  pages=content.count_pages(conn) if policy.may_manage_pages(user) else None,
+                  members=(accounts.count_active_members(conn)
+                           if policy.may_manage_accounts(user) else None))

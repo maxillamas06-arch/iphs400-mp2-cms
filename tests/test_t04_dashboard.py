@@ -24,7 +24,8 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
     ana, beto, leader = client_as("editor"), client_as("editor2"), client_as("admin")
     assert counts(leader.get("/admin").text) == {
         "Borradores": "0", "Esperando revisión": "0", "Publicadas": "0",
-        "Cambios propuestos": "0", "Páginas": "0"}  # T06 (#7): pages, for the leader only
+        "Cambios propuestos": "0", "Páginas": "0",  # T06 (#7): pages, for the leader only
+        "Miembros activos": "2"}  # T07 (#8): active members, for the leader only
 
     write_post(ana, title="Borrador de Ana")
     write_post(leader, title="Borrador del Capi", topic="fan-club-news")
@@ -35,7 +36,8 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
     expected = {"Borradores": "2", "Esperando revisión": "2", "Publicadas": "1",
                 "Cambios propuestos": "0"}
     assert counts(ana.get("/admin").text) == expected
-    assert counts(leader.get("/admin").text) == expected | {"Páginas": "0"}
+    assert counts(leader.get("/admin").text) == expected | {"Páginas": "0",
+                                                            "Miembros activos": "2"}
 
 
 def selected(html: str, name: str) -> str:
@@ -86,9 +88,10 @@ def test_each_dashboard_count_opens_the_content_list_filtered_to_that_status(
         r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)"', leader.get("/admin").text, re.S)}
 
     # T05 (#6) adds Cambios propuestos, which opens posts with a pending edit;
-    # T06 (#7) adds Páginas, which opens the pages.
+    # T06 (#7) adds Páginas, which opens the pages; T07 (#8) adds Miembros activos,
+    # which opens the accounts.
     assert set(links) == {"Borradores", "Esperando revisión", "Publicadas", "Cambios propuestos",
-                          "Páginas"}
+                          "Páginas", "Miembros activos"}
     queue = leader.get(links["Esperando revisión"]).text
     assert [row[0] for row in cells(queue) if row] == ["Enviada por Ana"]
     drafts = leader.get(links["Borradores"]).text

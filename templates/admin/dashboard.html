@@ -18,4 +18,10 @@
     <div><dt>Páginas</dt><dd><a href="{{ url_for('content').include_query_params(type='page') }}">{{ pages }}</a></dd></div>
   </dl>
   {% endif %}
+  {% if members is not none %}
+  <h2>Cuentas</h2>
+  <dl class="counts">
+    <div><dt>Miembros activos</dt><dd><a href="{{ url_for('users') }}">{{ members }}</a></dd></div>
+  </dl>
+  {% endif %}
 {% endblock %}

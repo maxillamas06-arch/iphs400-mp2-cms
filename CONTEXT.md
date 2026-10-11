@@ -28,6 +28,18 @@ _Avoid_: Contributor, author (as a role), user (when the role matters)
 The name readers see on a person's posts. Chosen once by that person at their first login; after that only the leader can change it. Unique, so no one can pass as someone else. Their real identity is known only to the leader.
 _Avoid_: Display name, username, handle, alias
 
+**Account** (*Cuenta*):
+A leader's or member's way into the admin console: an email, a password, a role, a nickname, and whether it is active. Never deleted. *Mi cuenta* is where a person sees their own.
+_Avoid_: User (in prose), profile, login
+
+**Temporary password** (*Contraseña temporal*):
+A password the leader sets on an account and hands over in person, for a new member or one who forgot theirs. The member can replace it on *Mi cuenta*.
+_Avoid_: Default password, reset link
+
+**Deactivate** (*Desactivar*):
+The leader closing an account without deleting it: its person can no longer sign in, and their posts stay under their nickname. **Reactivate** (*Reactivar*) opens it again.
+_Avoid_: Delete, ban, block, suspend
+
 **Reader**:
 Any fan visiting the public site. Has no account and cannot write.
 _Avoid_: Visitor, user, subscriber

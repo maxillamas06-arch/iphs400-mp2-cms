@@ -22,6 +22,11 @@ class LoginRequired(Exception):
     """Raised for an anonymous request to an admin route; answered with /login."""
 
 
+class NicknameRequired(Exception):
+    """Raised for a signed-in user who has not chosen a nickname yet; answered with
+    the first-login nickname screen."""
+
+
 class CsrfRejected(Exception):
     """Raised for a POST without this session's CSRF token; answered with 403."""
 
@@ -55,7 +60,9 @@ def csrf_token(request: Request) -> str:
 
 
 templates.env.globals["csrf_token"] = csrf_token
+templates.env.globals["role_names"] = accounts.ROLE_NAMES
 # Templates ask Policy only to hide buttons; every route checks again.
+templates.env.globals["may_manage_accounts"] = policy.may_manage_accounts
 templates.env.globals["may_publish"] = policy.may_publish
 templates.env.globals["may_submit_or_withdraw"] = policy.may_submit_or_withdraw
 templates.env.globals["may_change_post"] = policy.may_change_post
@@ -87,8 +94,10 @@ def signed_in_user(request: Request, conn: sqlite3.Connection = Depends(get_db))
     user = accounts.active_user(conn, request.session.get("user_id"))
     if user is None:
         raise LoginRequired
-    route = request.scope.get("route")
-    if not policy.may_use_route(user, getattr(route, "name", None)):
+    route_name = getattr(request.scope.get("route"), "name", None)
+    if policy.must_choose_nickname(user, route_name):
+        raise NicknameRequired
+    if not policy.may_use_route(user, route_name):
         raise Forbidden(user)
     return user
 

@@ -35,7 +35,7 @@ def test_seed_runs_clean_from_env_example_and_its_users_log_in_by_nickname(
 
 
 def test_seed_creates_the_leader_and_two_members_matching_the_test_helper(
-        tmp_path, login, demo_users, env_example, run_seed):
+        tmp_path, login, demo_users, env_example, run_seed, cells):
     database = tmp_path / "seeded.db"
     assert run_seed(database).returncode == 0
     leader = TestClient(create_app(database))
@@ -45,9 +45,9 @@ def test_seed_creates_the_leader_and_two_members_matching_the_test_helper(
 
     assert page.count("@albiazul.example") == 3
     assert page.count("<td>Líder</td>") == 1 and page.count("<td>Miembro</td>") == 2
+    listed = [row[:2] for row in cells(page) if row]
     for user in demo_users.values():
-        assert f"<td>{user['email']}</td>" in page
-        assert f"<td>{user['nickname']}</td>" in page
+        assert [user["email"], user["nickname"]] in listed
 
 
 @pytest.mark.parametrize("run", ["first", "second"])

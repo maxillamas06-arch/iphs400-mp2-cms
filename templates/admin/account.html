@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% block title %}Mi cuenta{% endblock %}
+{% block content %}
+  <h1>Mi cuenta</h1>
+  <dl>
+    <dt>Correo</dt><dd>{{ user.email }}</dd>
+    <dt>Apodo</dt>
+    <dd>{{ user.nickname }}
+      {% if may_manage_accounts(user) %}<span class="help">Lo cambias en <a href="{{ url_for('user', account_id=user.id) }}">tu cuenta en Cuentas</a>.</span>
+      {% else %}<span class="help">Solo el líder puede cambiar tu apodo.</span>{% endif %}</dd>
+    <dt>Rol</dt><dd>{{ role_names[user.role] }}</dd>
+  </dl>
+
+  <h2>Cambiar contraseña</h2>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('change_password') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <label for="current_password">Contraseña actual</label>
+    <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+    <label for="new_password">Contraseña nueva</label>
+    <input id="new_password" name="new_password" type="password" minlength="8" autocomplete="new-password" required>
+    <p class="help">Al menos 8 caracteres.</p>
+    <button class="primary" type="submit">Cambiar contraseña</button>
+  </form>
+{% endblock %}

@@ -76,7 +76,7 @@ def test_inactive_user_cannot_log_in(client, login, inactive_user, redirects_to_
 def test_open_session_of_a_deactivated_user_stops_working_on_next_request(
         client_as, database_path, redirects_to_login):
     member = client_as("editor")
-    # T07 gives the leader a deactivate button; until then, deactivate in storage.
+    # Deactivated in storage here; test_t07_users.py presses the leader's button.
     with closing(sqlite3.connect(database_path)) as conn, conn:
         conn.execute("UPDATE users SET active = 0 WHERE email = 'ana@albiazul.example'")
 

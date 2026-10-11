@@ -12,6 +12,14 @@ from app.content import Post, Status
 
 LEADER_ONLY_ROUTES = frozenset({
     "users",           # GET /admin/users: the list of accounts
+    "new_user",        # GET  /admin/users/new: the empty account form
+    "create_user",     # POST /admin/users/new
+    "user",            # GET  /admin/users/{id}: one account and its forms
+    "change_role",     # POST /admin/users/{id}/role
+    "set_nickname",    # POST /admin/users/{id}/nickname
+    "set_temporary_password",  # POST /admin/users/{id}/password
+    "deactivate_user",  # POST /admin/users/{id}/deactivate
+    "reactivate_user",  # POST /admin/users/{id}/reactivate
     "publish_post",    # POST /admin/posts/{id}/publish
     "unpublish_post",  # POST /admin/posts/{id}/unpublish
     "send_back_post",  # POST /admin/posts/{id}/send-back
@@ -32,8 +40,26 @@ LEADER_ONLY_ROUTES = frozenset({
 })
 
 
+# The only admin routes someone without a nickname may use: until they choose
+# one, the admin gate sends every other admin route to the nickname screen.
+NICKNAME_ROUTES = frozenset({
+    "nickname",         # GET  /admin/nickname: the first-login nickname screen
+    "choose_nickname",  # POST /admin/nickname
+})
+
+
+def must_choose_nickname(user: User, route_name: str | None) -> bool:
+    return user.nickname is None and route_name not in NICKNAME_ROUTES
+
+
 def may_use_route(user: User, route_name: str | None) -> bool:
     return user.is_leader or route_name not in LEADER_ONLY_ROUTES
+
+
+def may_manage_accounts(user: User) -> bool:
+    """Create accounts, change roles and nicknames, set temporary passwords,
+    deactivate and reactivate: the leader only."""
+    return user.is_leader
 
 
 def may_manage_pages(user: User) -> bool:

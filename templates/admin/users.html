@@ -2,6 +2,7 @@
 {% block title %}Cuentas{% endblock %}
 {% block content %}
   <h1>Cuentas</h1>
+  <p class="actions"><a class="button" href="{{ url_for('new_user') }}">Nueva cuenta</a></p>
   <div class="table-wrap">
     <table>
       <thead>
@@ -10,9 +11,9 @@
       <tbody>
         {% for account in users %}
         <tr>
-          <td>{{ account.email }}</td>
+          <td><a href="{{ url_for('user', account_id=account.id) }}">{{ account.email }}</a></td>
           <td>{{ account.nickname or "—" }}</td>
-          <td>{{ "Líder" if account.is_leader else "Miembro" }}</td>
+          <td>{{ role_names[account.role] }}</td>
           <td>{{ "Sí" if account.active else "No" }}</td>
         </tr>
         {% endfor %}

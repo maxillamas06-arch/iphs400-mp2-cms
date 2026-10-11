@@ -12,9 +12,9 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import db, settings
-from app.routes import auth, dashboard, pages, posts, users
-from app.web import (CsrfRejected, Forbidden, LoginRequired, NotFound, render,
-                     require_csrf)
+from app.routes import account, auth, dashboard, pages, posts, users
+from app.web import (CsrfRejected, Forbidden, LoginRequired, NicknameRequired, NotFound,
+                     render, require_csrf)
 
 
 def create_app(database_path: Path | None = None) -> FastAPI:
@@ -30,6 +30,10 @@ def create_app(database_path: Path | None = None) -> FastAPI:
     @app.exception_handler(LoginRequired)
     def to_login(request: Request, exc: LoginRequired):
         return RedirectResponse(app.url_path_for("login"), status_code=303)
+
+    @app.exception_handler(NicknameRequired)
+    def to_nickname(request: Request, exc: NicknameRequired):
+        return RedirectResponse(app.url_path_for("nickname"), status_code=303)
 
     @app.exception_handler(CsrfRejected)
     def reject_form(request: Request, exc: CsrfRejected):
@@ -47,6 +51,7 @@ def create_app(database_path: Path | None = None) -> FastAPI:
 
     app.include_router(auth.router)
     app.include_router(dashboard.router)
+    app.include_router(account.router)
     app.include_router(posts.router)
     app.include_router(pages.router)
     app.include_router(users.router)
