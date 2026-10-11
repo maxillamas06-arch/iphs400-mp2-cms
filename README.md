@@ -1,13 +1,14 @@
-# IPHS 400 — Mini-Project #2 starter (Web CMS)
+# Club de Aficionados Albiazul CMS (IPHS 400 Mini-Project #2)
 
-Click **Use this template** → name your repo **`iphs400-mp2-cms`** → make it **Public**.
-Do not fork: a fork arrives without an Issues tab, and your tickets live in Issues.
+A small CMS for an unofficial fan club of Rayados (C.F. Monterrey). Members write posts about
+the team, and the leader checks each one before it goes public. Fans read the result on a
+static public site. The admin console (FastAPI, Jinja and SQLite) runs only on the leader's
+computer; `cms publish` exports the published content to `site/`, and `cms deploy` puts it
+on GitHub Pages (ADR-001).
 
-## Start here
-
-1. `docs/manual_iphs400_mp2-web-cms_20260922.md` — the manual. Read Part 0 and Part 1 first.
-2. `docs/mp2-grading-rubric_20260922.md` — how you are graded. Read it **before** you build.
-3. `docs/mp2-setup_context-threshold-hook_20260922.md` — Exercise A, in Part 4 of the manual.
+The spec is issue #1 and the tickets are #2–#9, each with its code-review findings in a
+comment. The vocabulary is in `CONTEXT.md`, and the decisions that shaped the design are in
+`docs/adr/`.
 
 ## Live URL
 
@@ -53,23 +54,17 @@ members never see them in the admin console.
 ## What is here
 
 ```text
-.claude/hooks/     the context meter and usage ledger (Exercise A lives in ctx_guard.py)
-scripts/           usage_report.py (Exercise B lives in spend()), check_submission.py, seed_demo.py
-tests/             the exercise tests, plus helpers such as client_as("editor")
-app/, templates/   the T00 skeleton — every CMS feature is yours to build
-docs/adr/          two example decision records
+app/               the CMS: accounts, policy, content, markdown, export, site_update, routes/
+templates/         admin/ for the console, public/ for the exported site (inline SVG drawings)
+tests/             one file per ticket (test_t0N_*.py), each test named for its criterion;
+                   shared helpers such as client_as("editor") in conftest.py
+scripts/           seed_demo.py, check_submission.py, usage_report.py
+.claude/hooks/     the context meter, usage ledger and transcript hooks
+docs/              adr/, screenshots/, handoff/, transcripts/, the manual and the rubric
+CONTEXT.md         the glossary
 ```
 
-Two functions are deliberately unfinished and their tests fail until you write them:
-`decide()` in `.claude/hooks/ctx_guard.py` and `spend()` in `scripts/usage_report.py`.
-Both are graded. Use `/tdd`, as the manual says.
-
-## Deadlines
-
-Stage 1 (`mp2-mvp` tag): Tue Sep 29, 2:40 pm Eastern (soft target).
-Stage 2 (`mp2-final` tag): Tue Oct 6, 2:40 pm Eastern, grace until Wed Oct 7, 2:40 pm.
-
-Run `uv run python scripts/check_submission.py --stage 2` before you submit.
+Before submitting, run `uv run python scripts/check_submission.py --stage 2`.
 
 ## Generative AI Use Statement
 

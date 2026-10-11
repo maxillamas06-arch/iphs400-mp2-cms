@@ -23,20 +23,20 @@
    this session is in "Gotchas" below.
 3. **Compaction log** `docs/process/compaction-log.md`. Only the PreCompact hook writes it,
    and no compaction has happened yet.
-4. **Tags** `mp2-mvp` and `mp2-final`, pushed. Which commit gets `mp2-mvp` is the student's
-   call; `mp2-final` goes on the last commit, after the report.
-5. **Push `main`**, and update the live site to the final version (next section).
+4. **Tag** `mp2-final`, pushed, on the last commit, after the report. (`mp2-mvp` is pushed,
+   on the T03 commit `faec347`, with a message saying it was tagged on 2026-10-11.)
+5. ~~Push `main`, and update the live site~~: done. `main` is pushed, and `cms.db` was
+   re-seeded, exported and uploaded (`gh-pages` `97f2599`). The live site shows the final
+   version.
 
-## The live site is still the T03 version
+## Updating the live site later
 
-`gh-pages` is at `959d617`, which holds the same files as `95d83fd` (T03's demo site). It
-has no page menu and no T08 look. `cms.db` is stale too: it was written on Oct 10, has no
-`pages` table, and holds 5 published posts. To put the final demo online:
+`cms.db` holds the seeded demo data. After changing content, update the site with the
+leader's *Actualizar el sitio* button, or run:
 
 ```bash
-uv run python scripts/seed_demo.py   # WIPES cms.db and rebuilds the demo data
 uv run cms publish                   # site/ from the published content; records the export time
-uv run cms deploy                    # gh-pages; or press Actualizar el sitio as the leader
+uv run cms deploy                    # gh-pages
 ```
 
 ## Gotchas
@@ -51,13 +51,10 @@ uv run cms deploy                    # gh-pages; or press Actualizar el sitio as
   `GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=remote.origin.pushurl
   GIT_CONFIG_VALUE_0=/nonexistent GIT_CONFIG_KEY_1=remote.origin.url
   GIT_CONFIG_VALUE_1=/nonexistent`.
-- **The local `site/` is stale.** It still holds that test export. `uv run cms publish`
-  regenerates it.
 - **Don't press *Actualizar el sitio* in a console you only meant to look at.** The real
   button uploads for real. For demos and screenshots, build the app with
   `create_app(db, site=…, upload=fake)`, as the screenshots were taken.
-- **The README still has starter-template text:** "Click Use this template", the T00
-  skeleton note, and "Two functions are deliberately unfinished". Worth a pass before
-  `mp2-final`.
+- **The README's starter-template text is gone.** It now describes this project. The AI Use
+  Statement placeholder is the only template text left, for the student to replace.
 - **Uncommitted, not from this session:** changes to `.gitignore` (`.gstack/`) and
   `notes/`, and `docs/transcripts/`. They are the student's to review and commit.
