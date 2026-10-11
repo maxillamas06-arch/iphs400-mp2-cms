@@ -20,11 +20,6 @@ h1, h2 { color: var(--navy); line-height: 1.2; }
 .body pre { overflow-x: auto; padding: .5rem; background: var(--navy-soft); }
 .body blockquote { margin-left: 0; padding-left: 1rem; border-left: 4px solid var(--navy); }
 
-/* The drawings are inline SVG. The banner keeps a phone-friendly height and crops
-   its sky or sides to fill the width; the stadium shrinks with the screen. */
-.banner { display: block; width: 100%; height: clamp(7rem, 22vw, 15rem); }
-.stadium { display: block; width: 100%; max-width: 20rem; height: auto; margin: 0 auto .75rem; }
-
 footer { margin-top: 2rem; padding: 1rem; background: var(--navy); color: #fff; text-align: center; }
 .disclaimer { margin: 0; }
 .disclaimer[lang="en"] { font-size: .85rem; opacity: .85; }
