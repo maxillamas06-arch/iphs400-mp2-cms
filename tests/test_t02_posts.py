@@ -334,14 +334,12 @@ def test_leader_edits_any_members_post(client_as, write_post, csrf_token):
     assert "Rayada de Corazón" in page  # still Ana's post
 
 
-@pytest.mark.parametrize("status", ["submitted", "published"])
-def test_member_can_only_read_their_own_post_once_it_is_not_a_draft(
-        client_as, write_post, take_action, csrf_token, status):
+def test_member_can_only_read_their_own_post_once_it_is_submitted(
+        client_as, write_post, take_action, csrf_token):
+    # Once published, the member proposes an edit instead: T05 (#6).
     ana = client_as("editor")
     url = write_post(ana, title="Crónica del Clásico Regio", body="Original").headers["location"]
     take_action(ana, url, "submit")
-    if status == "published":
-        take_action(client_as("admin"), url, "publish")
 
     assert "<textarea" not in ana.get(url).text
     response = ana.post(url, data={"csrf_token": csrf_token(ana), "title": "Cambiado",

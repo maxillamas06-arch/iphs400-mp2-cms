@@ -32,6 +32,17 @@ CREATE TABLE IF NOT EXISTS posts (
     first_published_at TEXT,   -- set once, never cleared; locks the slug
     edited_at          TEXT    -- edited after publishing: "Actualizado el …"
 );
+
+-- A member's proposed change to their published post, waiting for the leader.
+-- Keyed by the post, so a post has at most one. Never the slug.
+CREATE TABLE IF NOT EXISTS pending_edits (
+    post_id    INTEGER PRIMARY KEY REFERENCES posts (id) ON DELETE CASCADE,
+    title      TEXT    NOT NULL,
+    topic      TEXT    NOT NULL,
+    body       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    updated_at TEXT    NOT NULL
+);
 """
 
 

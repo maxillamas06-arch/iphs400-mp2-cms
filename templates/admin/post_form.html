@@ -1,11 +1,26 @@
 {% extends "admin/base.html" %}
 {% set heading = post.title if post else "Nueva publicación" %}
+{# A member changing their published post proposes an edit; the leader checks it. #}
+{% set proposing = post and may_propose_edit(user, post) %}
 {% block title %}{{ heading }}{% endblock %}
 {% block content %}
   <h1>{{ heading }}</h1>
   {% if post %}{% include "admin/_post_meta.html" %}{% endif %}
+  {% if post and user.is_leader and post.pending_edit %}
+  <p class="notice">{{ post.author_nickname or "—" }} propuso cambios a esta publicación. Mientras no los revises, los lectores siguen viendo la versión publicada.
+    <a href="{{ url_for('pending_edit', post_id=post.id) }}">Revisar cambios propuestos</a></p>
+  {% endif %}
+  {% if proposing %}
+  <p class="help">
+    {%- if post.pending_edit %}Tus cambios propuestos, guardados el {{ post.pending_edit.updated_at | monterrey_time }}, están con el líder para que los revise. Si vuelves a proponer cambios, reemplazan a esos.
+    {%- else %}Está publicada: tus cambios no se publican de inmediato. El líder los revisa y, mientras tanto, los lectores siguen viendo la versión publicada.{% endif -%}
+  </p>
+  {% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-  <form method="post" action="{{ url_for('save_post', post_id=post.id) if post else url_for('create_post') }}">
+  {% if proposing %}{% set action = url_for('propose_edit', post_id=post.id) %}
+  {% elif post %}{% set action = url_for('save_post', post_id=post.id) %}
+  {% else %}{% set action = url_for('create_post') %}{% endif %}
+  <form method="post" action="{{ action }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
     <label for="title">Título</label>
     <input id="title" name="title" type="text" value="{{ form.title }}" required>
@@ -27,12 +42,18 @@
     <label for="body">Texto (Markdown)</label>
     <textarea id="body" name="body" rows="14">{{ form.body }}</textarea>
     <div class="actions">
-      <button class="primary" type="submit">{{ "Guardar borrador" if not post or post.status == "draft" else "Guardar cambios" }}</button>
+      <button class="primary" type="submit">
+        {%- if proposing %}Proponer cambios{% elif not post or post.status == "draft" %}Guardar borrador{% else %}Guardar cambios{% endif -%}
+      </button>
       <button type="submit" formaction="{{ url_for('preview_post', post_id=post.id) if post else url_for('preview_new_post') }}">Vista previa</button>
-      {% if post %}<a class="danger" href="{{ url_for('confirm_delete_post', post_id=post.id) }}">Borrar</a>{% endif %}
+      {% if post and may_change_post(user, post) %}<a class="danger" href="{{ url_for('confirm_delete_post', post_id=post.id) }}">Borrar</a>{% endif %}
     </div>
   </form>
-  {% if post and user.is_leader and post.status == "published" %}
+  {% if proposing %}
+  {# Proposing changes, above, is the member's only action on a published post. #}
+  {% elif post and user.is_leader and post.pending_edit %}
+  <p class="lifecycle help">Está publicada. No se puede despublicar mientras haya cambios propuestos sin revisar: apruébalos o devuélvelos primero.</p>
+  {% elif post and user.is_leader and post.status == "published" %}
   <form class="lifecycle" method="post" action="{{ url_for('unpublish_post', post_id=post.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
     <p class="help">Está publicada. Si la despublicas vuelve a ser borrador, y desaparece del sitio público con la próxima actualización del sitio.</p>

@@ -45,6 +45,9 @@ class Transition:
     starts: frozenset[Status]  # the statuses this action may start from
     leads_to: Status
     refused: str               # shown when the post's status is not one of `starts`
+    # Shown when the post has a pending edit and this action must wait for the
+    # leader to answer it; None when a pending edit does not matter.
+    refused_pending_edit: str | None = None
 
 
 # The post lifecycle (spec #1), one transition per action. Who may take each
@@ -63,8 +66,11 @@ PUBLISH = Transition(frozenset({Status.DRAFT, Status.SUBMITTED}), Status.PUBLISH
 SEND_BACK = Transition(frozenset({Status.SUBMITTED}), Status.DRAFT,
                        "Solo se puede devolver una publicación enviada.")
 # Unpublish: back to draft; gone from the public site at the next site update.
+# Never while a pending edit waits, so a member's proposal is not silently lost.
 UNPUBLISH = Transition(frozenset({Status.PUBLISHED}), Status.DRAFT,
-                       "Solo se puede despublicar una publicación publicada.")
+                       "Solo se puede despublicar una publicación publicada.",
+                       "No se puede despublicar mientras haya cambios propuestos sin revisar:"
+                       " apruébalos o devuélvelos primero.")
 
 
 @dataclass(frozen=True)
@@ -82,6 +88,21 @@ class PostFields:
 
 
 @dataclass(frozen=True)
+class PendingEdit:
+    """A member's proposed change to their published post: the published version
+    stays public until the leader approves it or sends it back. Never the slug."""
+    title: str
+    topic: str
+    body: str
+    created_at: str
+    updated_at: str
+
+    @property
+    def topic_name(self) -> str:
+        return TOPICS[self.topic]
+
+
+@dataclass(frozen=True)
 class Post:
     id: int
     title: str
@@ -94,6 +115,8 @@ class Post:
     created_at: str
     updated_at: str
     first_published_at: str | None  # set once, never cleared
+    edited_at: str | None  # last changed while published: "Actualizado el …"
+    pending_edit: PendingEdit | None  # at most one, only while published
 
     @property
     def slug_locked(self) -> bool:
@@ -150,15 +173,23 @@ def _free_slug(conn: sqlite3.Connection, wanted: str, post_id: int | None = None
     return slug
 
 
-_SELECT = ("SELECT posts.*, users.nickname AS author_nickname"
-           " FROM posts JOIN users ON users.id = posts.author_id")
+_SELECT = ("SELECT posts.*, users.nickname AS author_nickname,"
+           " pending_edits.title AS pending_title, pending_edits.topic AS pending_topic,"
+           " pending_edits.body AS pending_body, pending_edits.created_at AS pending_created_at,"
+           " pending_edits.updated_at AS pending_updated_at"
+           " FROM posts JOIN users ON users.id = posts.author_id"
+           " LEFT JOIN pending_edits ON pending_edits.post_id = posts.id")
 
 
 def _post_from_row(row: sqlite3.Row) -> Post:
+    pending_edit = None if row["pending_title"] is None else PendingEdit(
+        title=row["pending_title"], topic=row["pending_topic"], body=row["pending_body"],
+        created_at=row["pending_created_at"], updated_at=row["pending_updated_at"])
     return Post(id=row["id"], title=row["title"], slug=row["slug"], body=row["body"],
                 topic=row["topic"], status=Status(row["status"]), author_id=row["author_id"],
                 author_nickname=row["author_nickname"], created_at=row["created_at"],
-                updated_at=row["updated_at"], first_published_at=row["first_published_at"])
+                updated_at=row["updated_at"], first_published_at=row["first_published_at"],
+                edited_at=row["edited_at"], pending_edit=pending_edit)
 
 
 def create_post(conn: sqlite3.Connection, author: User, fields: PostFields) -> Post:
@@ -178,18 +209,76 @@ def create_post(conn: sqlite3.Connection, author: User, fields: PostFields) -> P
 
 
 def save_post(conn: sqlite3.Connection, post: Post, fields: PostFields) -> Post:
-    """Save: new title, topic, body and slug; the status stays as it is."""
+    """Save: new title, topic, body and slug; the status stays as it is. Saving a
+    published post (the leader's direct edit) marks it as edited after publishing."""
     _validate(fields)
     slug = _slug_for(conn, fields, post)
+    now = db.now()
+    edited = now if post.status == Status.PUBLISHED else post.edited_at
     with conn:
         conn.execute(
-            "UPDATE posts SET title = ?, slug = ?, body = ?, topic = ?, updated_at = ?"
-            " WHERE id = ?",
-            (fields.title, slug, fields.body, fields.topic, db.now(), post.id),
+            "UPDATE posts SET title = ?, slug = ?, body = ?, topic = ?, updated_at = ?,"
+            " edited_at = ? WHERE id = ?",
+            (fields.title, slug, fields.body, fields.topic, now, edited, post.id),
         )
     saved = get_post(conn, post.id)
     assert saved is not None
     return saved
+
+
+def propose_edit(conn: sqlite3.Connection, post: Post, fields: PostFields) -> Post:
+    """Propose edit: the member's new title, topic and body wait for the leader as
+    the post's pending edit, replacing any earlier one. The published version
+    stays as it is, and so does the slug."""
+    if post.status != Status.PUBLISHED:
+        raise ContentError("Solo se pueden proponer cambios a una publicación publicada.")
+    _validate(fields)
+    _slug_for(conn, fields, post)  # the slug is locked: a different one is refused
+    now = db.now()
+    with conn:
+        conn.execute(
+            "INSERT INTO pending_edits (post_id, title, topic, body, created_at, updated_at)"
+            " VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (post_id) DO UPDATE SET"
+            " title = excluded.title, topic = excluded.topic, body = excluded.body,"
+            " updated_at = excluded.updated_at",
+            (post.id, fields.title, fields.topic, fields.body, now, now),
+        )
+    proposed = get_post(conn, post.id)
+    assert proposed is not None
+    return proposed
+
+
+def approve_edit(conn: sqlite3.Connection, post: Post) -> Post:
+    """Approve: the pending edit replaces the published title, topic and body and
+    is removed. Readers see the new version, marked "Actualizado el …", from the
+    next site update on."""
+    edit = _require_pending_edit(post)
+    now = db.now()
+    with conn:
+        conn.execute("UPDATE posts SET title = ?, topic = ?, body = ?, updated_at = ?,"
+                     " edited_at = ? WHERE id = ?",
+                     (edit.title, edit.topic, edit.body, now, now, post.id))
+        conn.execute("DELETE FROM pending_edits WHERE post_id = ?", (post.id,))
+    approved = get_post(conn, post.id)
+    assert approved is not None
+    return approved
+
+
+def send_back_edit(conn: sqlite3.Connection, post: Post) -> Post:
+    """Send back a pending edit: it is thrown away; the published version stays
+    as it is."""
+    _require_pending_edit(post)
+    with conn:
+        conn.execute("DELETE FROM pending_edits WHERE post_id = ?", (post.id,))
+    sent_back = get_post(conn, post.id)
+    assert sent_back is not None
+    return sent_back
+
+
+def _require_pending_edit(post: Post) -> PendingEdit:
+    if post.pending_edit is None:
+        raise ContentError("Esta publicación no tiene cambios propuestos.")
+    return post.pending_edit
 
 
 def move(conn: sqlite3.Connection, post: Post, transition: Transition) -> Post:
@@ -197,6 +286,8 @@ def move(conn: sqlite3.Connection, post: Post, transition: Transition) -> Post:
     published sets first-published the first time only."""
     if post.status not in transition.starts:
         raise ContentError(transition.refused)
+    if post.pending_edit is not None and transition.refused_pending_edit:
+        raise ContentError(transition.refused_pending_edit)
     now = db.now()
     first_published = post.first_published_at or (
         now if transition.leads_to == Status.PUBLISHED else None)
@@ -234,12 +325,19 @@ def count_by_status(conn: sqlite3.Connection) -> dict[Status, int]:
     return {status: found.get(status, 0) for status in Status}
 
 
+def count_pending_edits(conn: sqlite3.Connection) -> int:
+    """How many published posts have a pending edit waiting for the leader."""
+    return conn.execute("SELECT COUNT(*) FROM pending_edits").fetchone()[0]
+
+
 def list_posts(conn: sqlite3.Connection, status: Status | None = None,
-               topic: str | None = None) -> list[Post]:
+               topic: str | None = None, with_pending_edit: bool = False) -> list[Post]:
     """Every post from every author, most recently updated first; only those in
-    this status, or filed under this topic, when one is given."""
+    this status, filed under this topic, or with a pending edit, when asked."""
     rows = conn.execute(f"{_SELECT} WHERE (:status IS NULL OR posts.status = :status)"
                         " AND (:topic IS NULL OR posts.topic = :topic)"
+                        " AND (NOT :with_pending_edit OR pending_edits.post_id IS NOT NULL)"
                         " ORDER BY posts.updated_at DESC, posts.id DESC",
-                        {"status": status, "topic": topic}).fetchall()
+                        {"status": status, "topic": topic,
+                         "with_pending_edit": with_pending_edit}).fetchall()
     return [_post_from_row(row) for row in rows]

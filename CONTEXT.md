@@ -69,7 +69,7 @@ A post its member is still writing. Never public.
 _Avoid_: Unpublished (too broad), saved
 
 **Submitted** (*Enviada*):
-A post its member has finished and handed to the leader for checking. Never public. The dashboard counts these as *Esperando revisión* (waiting for review): the leader's review queue.
+A post its member has finished and handed to the leader for checking. Never public. The dashboard counts these as *Esperando revisión* (waiting for review). With pending edits, they make up the leader's review queue.
 _Avoid_: Pending, in review, ready
 
 **Published** (*Publicada*):
@@ -80,7 +80,7 @@ _Avoid_: Live, approved, public
 A member pulling their submitted post back to draft to keep working on it.
 _Avoid_: Cancel, unsubmit
 
-**Send back**:
+**Send back** (*Devolver*):
 The leader saying no: a submitted post returns to draft, or a pending edit is thrown away.
 _Avoid_: Reject, decline
 
@@ -88,12 +88,12 @@ _Avoid_: Reject, decline
 The leader returning a published post to draft, taking it off the public site at the next site update. The slug stays locked.
 _Avoid_: Archive, hide, retract
 
-**Pending edit**:
-A member's proposed change to a published post, waiting for the leader. The published version stays public meanwhile; a post has at most one pending edit.
+**Pending edit** (*Cambios propuestos*):
+A member's proposed change to a published post (title, topic, body; never the slug), waiting for the leader. The published version stays public meanwhile; a post has at most one pending edit. The dashboard counts these as *Cambios propuestos*.
 _Avoid_: Revision (that means history), draft (the post is still published)
 
-**Approve**:
-The leader accepting a pending edit, which replaces the published version.
+**Approve** (*Aprobar*):
+The leader accepting a pending edit, which replaces the published version. Readers then see *Actualizado el …* on the post, as they do after the leader edits a published post directly.
 _Avoid_: Merge, accept, publish (publish is for submitted posts)
 
 **Site update** (*Actualizar el sitio*):

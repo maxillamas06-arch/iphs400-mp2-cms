@@ -9,5 +9,6 @@
                              ("published", "Publicadas")] %}
     <div><dt>{{ label }}</dt><dd><a href="{{ url_for('content').include_query_params(status=status) }}">{{ counts[status] }}</a></dd></div>
     {% endfor %}
+    <div><dt>Cambios propuestos</dt><dd><a href="{{ url_for('content').include_query_params(pending=1) }}">{{ pending_edits }}</a></dd></div>
   </dl>
 {% endblock %}

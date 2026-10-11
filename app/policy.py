@@ -15,6 +15,9 @@ LEADER_ONLY_ROUTES = frozenset({
     "publish_post",    # POST /admin/posts/{id}/publish
     "unpublish_post",  # POST /admin/posts/{id}/unpublish
     "send_back_post",  # POST /admin/posts/{id}/send-back
+    "pending_edit",    # GET  /admin/posts/{id}/pending-edit: published vs proposed
+    "approve_edit",    # POST /admin/posts/{id}/pending-edit/approve
+    "send_back_edit",  # POST /admin/posts/{id}/pending-edit/send-back
 })
 
 
@@ -23,9 +26,22 @@ def may_use_route(user: User, route_name: str | None) -> bool:
 
 
 def may_change_post(user: User, post: Post) -> bool:
-    """Save, preview or delete this post: the leader, any post; a member, only
+    """Save this post directly, or delete it: the leader, any post; a member, only
     their own drafts (ADR-003)."""
     return user.is_leader or (post.author_id == user.id and post.status == Status.DRAFT)
+
+
+def may_propose_edit(user: User, post: Post) -> bool:
+    """Propose an edit to this post: only the member who wrote it, once it is
+    published. The leader edits published posts directly instead (ADR-003)."""
+    return (not user.is_leader and post.author_id == user.id
+            and post.status == Status.PUBLISHED)
+
+
+def may_use_editor(user: User, post: Post) -> bool:
+    """Open this post in the editor and preview it: whoever may save it directly
+    or propose an edit to it."""
+    return may_change_post(user, post) or may_propose_edit(user, post)
 
 
 def may_submit_or_withdraw(user: User, post: Post) -> bool:

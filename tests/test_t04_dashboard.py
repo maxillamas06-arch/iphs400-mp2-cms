@@ -22,7 +22,8 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
         client_as, write_post, take_action, published_post):
     ana, beto, leader = client_as("editor"), client_as("editor2"), client_as("admin")
     assert counts(leader.get("/admin").text) == {
-        "Borradores": "0", "Esperando revisión": "0", "Publicadas": "0"}
+        "Borradores": "0", "Esperando revisión": "0", "Publicadas": "0",
+        "Cambios propuestos": "0"}
 
     write_post(ana, title="Borrador de Ana")
     write_post(leader, title="Borrador del Capi", topic="fan-club-news")
@@ -32,7 +33,8 @@ def test_dashboard_counts_drafts_submitted_labelled_waiting_for_review_and_publi
 
     for viewer in (leader, ana):
         assert counts(viewer.get("/admin").text) == {
-            "Borradores": "2", "Esperando revisión": "2", "Publicadas": "1"}
+            "Borradores": "2", "Esperando revisión": "2", "Publicadas": "1",
+            "Cambios propuestos": "0"}
 
 
 def selected(html: str, name: str) -> str:
@@ -82,7 +84,8 @@ def test_each_dashboard_count_opens_the_content_list_filtered_to_that_status(
     links = {text(label): href for label, href in re.findall(
         r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)"', leader.get("/admin").text, re.S)}
 
-    assert set(links) == {"Borradores", "Esperando revisión", "Publicadas"}
+    # T05 (#6) adds Cambios propuestos, which opens posts with a pending edit.
+    assert set(links) == {"Borradores", "Esperando revisión", "Publicadas", "Cambios propuestos"}
     queue = leader.get(links["Esperando revisión"]).text
     assert [row[0] for row in cells(queue) if row] == ["Enviada por Ana"]
     drafts = leader.get(links["Borradores"]).text

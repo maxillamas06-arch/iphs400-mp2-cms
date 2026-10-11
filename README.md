@@ -32,7 +32,9 @@ Demo accounts (all fictional; passwords are the values in `.env`):
 The seed also adds one draft post written by Rayada de Corazón (open *Publicaciones*), one
 post by Furia del Cerro waiting for the leader's review (the *Esperando revisión* count on the
 leader's *Panel*), and one published post in each of the five topics, so the exported site has
-something in every section.
+something in every section. Rayada de Corazón has also proposed changes to her published lineup
+post: the *Cambios propuestos* count on the *Panel* opens it, and the leader compares the two
+versions side by side before approving or sending them back.
 
 ## What is here
 

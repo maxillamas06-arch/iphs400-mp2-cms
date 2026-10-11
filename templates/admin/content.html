@@ -22,6 +22,9 @@
         {% endfor %}
       </select>
     </div>
+    <div>
+      <label><input type="checkbox" name="pending" value="1"{% if pending %} checked{% endif %}> Solo con cambios propuestos</label>
+    </div>
     <button type="submit">Filtrar</button>
   </form>
   {% if posts %}
@@ -43,7 +46,7 @@
       </tbody>
     </table>
   </div>
-  {% elif status or topic %}
+  {% elif status or topic or pending %}
   <p>Ninguna publicación coincide con estos filtros.</p>
   {% else %}
   <p>Todavía no hay publicaciones.</p>

@@ -4,7 +4,8 @@
   <article>
     <h1>{{ post.title }}</h1>
     <p class="meta">Por {{ post.author_nickname }} · <a href="{{ href(topic.path) }}">{{ topic.name }}</a></p>
-    <p class="meta">Publicado el {{ post.first_published_at | spanish_date }}</p>
+    <p class="meta">Publicado el {{ post.first_published_at | spanish_date }}
+      {%- if post.edited_at %} · Actualizado el {{ post.edited_at | spanish_date }}{% endif %}</p>
     <div class="body">{{ body_html | safe }}</div>
   </article>
 {% endblock %}

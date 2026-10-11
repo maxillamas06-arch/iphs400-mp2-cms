@@ -4,8 +4,8 @@
     uv run python scripts/seed_demo.py
 
 Wipes the database at CMS_DATABASE and creates the leader, two members, a
-member's draft post, a member's post submitted for review, and one published
-post in each topic.
+member's draft post, a member's post submitted for review, one published post
+in each topic, and a member's pending edit to one of them.
 Passwords come from CMS_ADMIN_PASSWORD and CMS_EDITOR_PASSWORD (read from .env,
 or from .env.example on a fresh clone); they are never printed.
 """
@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import closing
+from dataclasses import replace
 
 from app import accounts, content, db, settings
 from app.content import PostFields
@@ -52,6 +53,30 @@ SUBMITTED = PostFields(
     ),
 )
 
+# A published post (written by ana@) that she then changes: her change waits for
+# the leader as a pending edit while this version stays public.
+LINEUP = PostFields(
+    title="El once que yo pondría el sábado",
+    topic="lineup",
+    body=(
+        "Sin nombres, que luego se enojan en el grupo. Lo que pido es **orden atrás**"
+        " y velocidad por las bandas:\n\n"
+        "1. El portero de siempre, que anda en racha.\n"
+        "2. Línea de cuatro, con el lateral izquierdo bien ofensivo.\n"
+        "3. Dos de contención, para que no nos agarren al contragolpe.\n"
+        "4. Arriba, el nueve fijo y alguien que llegue desde atrás.\n\n"
+        "¿Ustedes cómo lo armarían?\n"
+    ),
+)
+PENDING_EDIT = replace(
+    LINEUP,
+    title="El once que yo pondría el sábado (con tres centrales)",
+    body=LINEUP.body + (
+        "\n**Actualización:** viendo el entrenamiento del jueves, cambio una cosa: tres"
+        " centrales y los laterales bien abiertos, de carrileros.\n"
+    ),
+)
+
 # One published post per topic, as (author's email, post). The Partido one is a
 # tiradera aimed at Tigres: allowed by the house rules, which forbid only
 # personal attacks. No real person is named.
@@ -69,19 +94,7 @@ PUBLISHED = [
             "- Volver a casa con los tres puntos.\n"
         ),
     )),
-    ("ana@albiazul.example", PostFields(
-        title="El once que yo pondría el sábado",
-        topic="lineup",
-        body=(
-            "Sin nombres, que luego se enojan en el grupo. Lo que pido es **orden atrás**"
-            " y velocidad por las bandas:\n\n"
-            "1. El portero de siempre, que anda en racha.\n"
-            "2. Línea de cuatro, con el lateral izquierdo bien ofensivo.\n"
-            "3. Dos de contención, para que no nos agarren al contragolpe.\n"
-            "4. Arriba, el nueve fijo y alguien que llegue desde atrás.\n\n"
-            "¿Ustedes cómo lo armarían?\n"
-        ),
-    )),
+    ("ana@albiazul.example", LINEUP),
     ("ana@albiazul.example", PostFields(
         title="Al técnico hay que darle tiempo",
         topic="coach",
@@ -135,15 +148,17 @@ def main() -> int:
         for email, fields in PUBLISHED:
             # The seed acts as the leader; in the console a member's post is
             # submitted before the leader can publish it.
-            post = content.create_post(conn, users[email], fields)
-            content.move(conn, post, content.PUBLISH)
+            post = content.move(conn, content.create_post(conn, users[email], fields),
+                                content.PUBLISH)
+            if fields is LINEUP:
+                content.propose_edit(conn, post, PENDING_EDIT)
 
     print(f"Rebuilt {path} with these demo accounts:")
     for email, nickname, role, var in DEMO_USERS:
         print(f"  {email:<26} {role:<7} {nickname}  (password: ${var})")
-    print(f"one draft post ({DRAFT.title}), one post waiting for review ({SUBMITTED.title})"
-          f" and {len(PUBLISHED)} published posts, one per topic."
-          " Run `uv run cms publish` to export them to site/.")
+    print(f"one draft post ({DRAFT.title}), one post waiting for review ({SUBMITTED.title}),"
+          f" {len(PUBLISHED)} published posts, one per topic, and a pending edit to"
+          f" {LINEUP.title}. Run `uv run cms publish` to export them to site/.")
     return 0
 
 

@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+{% block title %}Cambios propuestos · {{ post.title }}{% endblock %}
+{% block content %}
+  <h1>Cambios propuestos a «{{ post.title }}»</h1>
+  <p class="meta">De {{ post.author_nickname or "—" }} · propuestos el {{ edit.updated_at | monterrey_time }}</p>
+  <p class="help">Cada versión se ve como la verán los lectores. El enlace no cambia.</p>
+  <div class="side-by-side">
+    <section class="version" aria-label="Versión publicada">
+      <h2>Versión publicada</h2>
+      <p class="help">La que ven los lectores ahora.</p>
+      <h3>{{ post.title }}</h3>
+      <p class="meta">{{ post.topic_name }}</p>
+      <div class="preview-body">{{ published_html | safe }}</div>
+    </section>
+    <section class="version" aria-label="Cambios propuestos">
+      <h2>Cambios propuestos</h2>
+      <p class="help">Cómo quedaría si apruebas los cambios.</p>
+      <h3>{{ edit.title }}</h3>
+      <p class="meta">{{ edit.topic_name }}</p>
+      <div class="preview-body">{{ proposed_html | safe }}</div>
+    </section>
+  </div>
+  <form class="lifecycle" method="post" action="{{ url_for('approve_edit', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Si apruebas los cambios, la nueva versión reemplaza a la publicada. Los lectores la verán, con «Actualizado el …», después de la próxima actualización del sitio.</p>
+    <button class="primary" type="submit">Aprobar cambios</button>
+  </form>
+  <form class="lifecycle" method="post" action="{{ url_for('send_back_edit', post_id=post.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+    <p class="help">Si no se pueden publicar así, devuélvelos: se descartan y la versión publicada queda como está. Quien los propuso puede proponer otros.</p>
+    <button type="submit">Devolver los cambios</button>
+  </form>
+  <p><a href="{{ url_for('post', post_id=post.id) }}">Volver a la publicación</a></p>
+{% endblock %}

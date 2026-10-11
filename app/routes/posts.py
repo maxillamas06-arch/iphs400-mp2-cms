@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
 from app import content, markdown, policy
 from app.accounts import User
-from app.content import Post, PostFields, Status, Transition
+from app.content import PendingEdit, Post, PostFields, Status
 from app.web import Forbidden, NotFound, flash, get_db, render, signed_in_user
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(signed_in_user)])
@@ -28,10 +29,28 @@ def existing_post(post_id: str, user: User = Depends(signed_in_user),
     return post
 
 
+NOT_YOURS = "Solo puedes cambiar o borrar tus propios borradores."
+
+
 def changeable_post(post: Post = Depends(existing_post),
                     user: User = Depends(signed_in_user)) -> Post:
     if not policy.may_change_post(user, post):
-        raise Forbidden(user, "Solo puedes cambiar o borrar tus propios borradores.")
+        raise Forbidden(user, NOT_YOURS)
+    return post
+
+
+def previewable_post(post: Post = Depends(existing_post),
+                  user: User = Depends(signed_in_user)) -> Post:
+    if not policy.may_use_editor(user, post):
+        raise Forbidden(user, NOT_YOURS)
+    return post
+
+
+def proposable_post(post: Post = Depends(existing_post),
+                    user: User = Depends(signed_in_user)) -> Post:
+    if not policy.may_propose_edit(user, post):
+        raise Forbidden(user, "Solo el miembro que escribió una publicación ya publicada puede"
+                              " proponerle cambios.")
     return post
 
 
@@ -52,19 +71,22 @@ def own_post(post: Post = Depends(existing_post),
 
 
 def render_post_form(request: Request, user: User, post: Post | None,
-                     form: PostFields | Post, status_code: int = 200, **context):
+                     form: PostFields | Post | PendingEdit, status_code: int = 200, **context):
     return render(request, "admin/post_form.html", user, status_code=status_code,
                   post=post, form=form, topics=content.TOPICS, **context)
 
 
 def render_post_page(request: Request, user: User, post: Post, status_code: int = 200,
                      **context):
-    """The post as this person gets it: the editor when they may change it, else
-    read only."""
-    if not policy.may_change_post(user, post):
+    """The post as this person gets it: the editor when they may change it or
+    propose an edit to it, else read only. A member proposing an edit picks up
+    their pending edit where they left it."""
+    if not policy.may_use_editor(user, post):
         return render(request, "admin/post_view.html", user, status_code=status_code,
                       post=post, body_html=markdown.to_html(post.body), **context)
-    return render_post_form(request, user, post, post, status_code=status_code, **context)
+    proposal = post.pending_edit if policy.may_propose_edit(user, post) else None
+    return render_post_form(request, user, post, proposal or post, status_code=status_code,
+                            **context)
 
 
 def saved_message(message: str, fields: PostFields, saved: Post) -> str:
@@ -76,15 +98,16 @@ def saved_message(message: str, fields: PostFields, saved: Post) -> str:
 
 
 @router.get("/content", name="content")
-def content_list(request: Request, status: str = "", topic: str = "",
+def content_list(request: Request, status: str = "", topic: str = "", pending: str = "",
                  user: User = Depends(signed_in_user),
                  conn: sqlite3.Connection = Depends(get_db)):
     # A filter value the list does not offer is no filter at all.
     chosen_status = Status(status) if status in content.STATUS_NAMES else None
     chosen_topic = topic if topic in content.TOPICS else None
+    with_pending_edit = pending == "1"
     return render(request, "admin/content.html", user,
-                  posts=content.list_posts(conn, chosen_status, chosen_topic),
-                  status=chosen_status, topic=chosen_topic,
+                  posts=content.list_posts(conn, chosen_status, chosen_topic, with_pending_edit),
+                  status=chosen_status, topic=chosen_topic, pending=with_pending_edit,
                   statuses=content.STATUS_NAMES, topics=content.TOPICS)
 
 
@@ -133,17 +156,43 @@ def save_post(request: Request, post: Post = Depends(changeable_post),
 
 
 @router.post("/posts/{post_id}/preview", name="preview_post")
-def preview_post(request: Request, post: Post = Depends(changeable_post),
+def preview_post(request: Request, post: Post = Depends(previewable_post),
                  fields: PostFields = Depends(post_fields), user: User = Depends(signed_in_user)):
     return render_post_form(request, user, post, fields,
                             preview_html=markdown.to_html(fields.body))
 
 
-def take_action(request: Request, user: User, post: Post, conn: sqlite3.Connection,
-                transition: Transition, done: str):
+@router.post("/posts/{post_id}/propose-edit", name="propose_edit")
+def propose_edit(request: Request, post: Post = Depends(proposable_post),
+                 fields: PostFields = Depends(post_fields), user: User = Depends(signed_in_user),
+                 conn: sqlite3.Connection = Depends(get_db)):
+    try:
+        content.propose_edit(conn, post, fields)
+    except content.ContentError as refused:
+        return render_post_form(request, user, post, fields, status_code=400,
+                                error=str(refused))
+    flash(request, "Cambios propuestos. El líder los revisará; mientras tanto, los lectores siguen"
+                   " viendo la versión publicada.")
+    return RedirectResponse(request.app.url_path_for("post", post_id=post.id), status_code=303)
+
+
+@router.get("/posts/{post_id}/pending-edit", name="pending_edit")
+def pending_edit(request: Request, post: Post = Depends(existing_post),
+                 user: User = Depends(signed_in_user)):
+    """The published version and the pending edit side by side, each as readers
+    would see it."""
+    if post.pending_edit is None:
+        raise NotFound(user)
+    return render(request, "admin/pending_edit.html", user, post=post, edit=post.pending_edit,
+                  published_html=markdown.to_html(post.body),
+                  proposed_html=markdown.to_html(post.pending_edit.body))
+
+
+def take_action(request: Request, user: User, post: Post, step: Callable[[], object],
+                done: str):
     """A lifecycle button: done with a message, or refused with the reason why."""
     try:
-        content.move(conn, post, transition)
+        step()
     except content.ContentError as refused:
         return render_post_page(request, user, post, status_code=400, error=str(refused))
     flash(request, done)
@@ -154,7 +203,7 @@ def take_action(request: Request, user: User, post: Post, conn: sqlite3.Connecti
 def submit_post(request: Request, post: Post = Depends(own_post),
                 user: User = Depends(signed_in_user),
                 conn: sqlite3.Connection = Depends(get_db)):
-    return take_action(request, user, post, conn, content.SUBMIT,
+    return take_action(request, user, post, lambda: content.move(conn, post, content.SUBMIT),
                        "Enviada al líder para revisión.")
 
 
@@ -162,7 +211,7 @@ def submit_post(request: Request, post: Post = Depends(own_post),
 def withdraw_post(request: Request, post: Post = Depends(own_post),
                   user: User = Depends(signed_in_user),
                   conn: sqlite3.Connection = Depends(get_db)):
-    return take_action(request, user, post, conn, content.WITHDRAW,
+    return take_action(request, user, post, lambda: content.move(conn, post, content.WITHDRAW),
                        "Retirada. Volvió a ser borrador y puedes seguir escribiéndola.")
 
 
@@ -170,7 +219,7 @@ def withdraw_post(request: Request, post: Post = Depends(own_post),
 def publish_post(request: Request, post: Post = Depends(publishable_post),
                  user: User = Depends(signed_in_user),
                  conn: sqlite3.Connection = Depends(get_db)):
-    return take_action(request, user, post, conn, content.PUBLISH,
+    return take_action(request, user, post, lambda: content.move(conn, post, content.PUBLISH),
                        "Publicada. Los lectores la verán después de la próxima actualización"
                        " del sitio.")
 
@@ -179,7 +228,7 @@ def publish_post(request: Request, post: Post = Depends(publishable_post),
 def send_back_post(request: Request, post: Post = Depends(existing_post),
                    user: User = Depends(signed_in_user),
                    conn: sqlite3.Connection = Depends(get_db)):
-    return take_action(request, user, post, conn, content.SEND_BACK,
+    return take_action(request, user, post, lambda: content.move(conn, post, content.SEND_BACK),
                        "Devuelta. Volvió a ser borrador: quien la escribió puede corregirla"
                        " y enviarla otra vez.")
 
@@ -188,9 +237,26 @@ def send_back_post(request: Request, post: Post = Depends(existing_post),
 def unpublish_post(request: Request, post: Post = Depends(existing_post),
                    user: User = Depends(signed_in_user),
                    conn: sqlite3.Connection = Depends(get_db)):
-    return take_action(request, user, post, conn, content.UNPUBLISH,
+    return take_action(request, user, post, lambda: content.move(conn, post, content.UNPUBLISH),
                        "Volvió a ser borrador. Desaparecerá del sitio público con la próxima"
                        " actualización del sitio.")
+
+
+@router.post("/posts/{post_id}/pending-edit/approve", name="approve_edit")
+def approve_edit(request: Request, post: Post = Depends(existing_post),
+                 user: User = Depends(signed_in_user),
+                 conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, lambda: content.approve_edit(conn, post),
+                       "Cambios aprobados. Los lectores verán la nueva versión después de la"
+                       " próxima actualización del sitio.")
+
+
+@router.post("/posts/{post_id}/pending-edit/send-back", name="send_back_edit")
+def send_back_edit(request: Request, post: Post = Depends(existing_post),
+                   user: User = Depends(signed_in_user),
+                   conn: sqlite3.Connection = Depends(get_db)):
+    return take_action(request, user, post, lambda: content.send_back_edit(conn, post),
+                       "Cambios devueltos. La versión publicada quedó como estaba.")
 
 
 @router.get("/posts/{post_id}/delete", name="confirm_delete_post")

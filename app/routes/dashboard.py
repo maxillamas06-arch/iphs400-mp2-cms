@@ -16,4 +16,5 @@ router = APIRouter(prefix="/admin", dependencies=[Depends(signed_in_user)])
 def dashboard(request: Request, user: User = Depends(signed_in_user),
               conn: sqlite3.Connection = Depends(get_db)):
     return render(request, "admin/dashboard.html", user,
-                  counts=content.count_by_status(conn))
+                  counts=content.count_by_status(conn),
+                  pending_edits=content.count_pending_edits(conn))

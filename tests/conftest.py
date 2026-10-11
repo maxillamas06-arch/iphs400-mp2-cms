@@ -151,6 +151,22 @@ def write_post(csrf_token):
 
 
 @pytest.fixture
+def propose_edit(csrf_token):
+    """Return a function: propose_edit(client, post_url, title=..., topic=..., body=...,
+    slug=...) -> the (unfollowed) response to a member saving changes to their
+    published post with the editor's Proponer cambios button."""
+
+    def _propose(c: TestClient, url: str, title: str = "Crónica del Clásico Regio",
+                 topic: str = "match", body: str = "Ganamos **3-1** en casa.", slug: str = ""):
+        return c.post(f"{url}/propose-edit",
+                      data={"csrf_token": csrf_token(c, url), "title": title, "topic": topic,
+                            "body": body, "slug": slug},
+                      follow_redirects=False)
+
+    return _propose
+
+
+@pytest.fixture
 def take_action(csrf_token):
     """Return a function: take_action(client, post_url, "publish") -> the (unfollowed)
     response to that lifecycle action's button on the post's page."""
@@ -251,6 +267,21 @@ def button_action():
         return None
 
     return _action
+
+
+@pytest.fixture
+def dashboard_counts():
+    """Return a function: dashboard_counts(client) -> each dashboard count's label ->
+    (its number, where it links), as a reader sees them."""
+
+    def _text(html: str) -> str:
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).strip()
+
+    def _counts(c: TestClient) -> dict[str, tuple[str, str]]:
+        return {_text(label): (_text(number), href) for label, href, number in re.findall(
+            r'<dt>(.*?)</dt>\s*<dd><a href="([^"]+)">(.*?)</a></dd>', c.get("/admin").text, re.S)}
+
+    return _counts
 
 
 @pytest.fixture

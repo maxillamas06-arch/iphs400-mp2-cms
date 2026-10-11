@@ -11,7 +11,7 @@
     <button type="submit">Retirar</button>
   </form>
   {% else %}
-  <p class="help">Solo puedes leerla: cada miembro cambia únicamente sus propios borradores.</p>
+  <p class="help">Solo puedes leerla: cada miembro cambia únicamente lo que escribió.</p>
   {% endif %}
   <div class="preview-body">{{ body_html | safe }}</div>
   <p><a href="{{ url_for('content') }}">Volver a las publicaciones</a></p>
