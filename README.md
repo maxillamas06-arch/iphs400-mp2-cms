@@ -68,6 +68,38 @@ Before submitting, run `uv run python scripts/check_submission.py --stage 2`.
 
 ## Generative AI Use Statement
 
-*(Required. Replace this section: name the models and skills you used, quote two
-prompts you really sent, describe one real model failure, and include a
-"Backends used" table if you ever switched providers.)*
+**Models.** Claude Opus 5.5 at xhigh effort, in Claude Code, for every session: the grill,
+the spec, the tickets, all eight `/implement` runs and their reviewers. My token plan said
+Sonnet 5.5 at medium for the tickets; I kept Opus on purpose, and the ledger shows it still
+fit (see the report).
+
+**Skills.** From mattpocock-skills: `/grill-with-docs`, `/to-spec`, `/to-tickets`,
+`/setup-matt-pocock-skills`, and `/implement` for each ticket, which runs `/tdd` and the
+two-reviewer `/code-review`. gstack `browse` for the 390 px checks and the screenshots. The
+repo's own hooks log context, usage, compactions and transcripts.
+
+**Two prompts I really sent.**
+
+- In the grill, when the AI proposed slugs without accents: *"i dont like the fact that u
+  erase accens, dont do that"*. The slugs keep á, é, í, ó, ú, ü and ñ because of it.
+- Starting T01, although my own token plan said Sonnet for the tickets:
+  *"/mattpocock-skills:implement #2, dont worry i want this model"*.
+
+**One real model failure.** In T08, Claude ran a new safety test before writing the guard
+that test was checking. The test used the real upload and put an empty test site on the live
+`gh-pages` branch (`c000bb7`, 2026-10-11 13:56). It stopped and asked me how to repair it, and
+`959d617` restored the previous site without a force-push. The fixture `nothing_goes_online`
+in `tests/conftest.py` now blocks it. Earlier, in the grill, it misread my "ok nvm lets do it
+ur way" and wrote an ADR for putting the console online, which I had it delete.
+
+**Writing.** Claude drafted the report and this statement from the repo, the transcripts and
+`notes/usage-ledger.csv`. The parts about what I'd do differently and why I picked these
+skills are mine, and I edited the rest.
+
+**Backends used**
+
+| Provider | Model | Sessions |
+|---|---|---|
+| Anthropic (Claude Code) | Claude Opus 5.5, xhigh | All of them: grill, spec, tickets, T01–T08, wrap-up |
+
+I never used the Plan B backend, so no commit has a `Backend:` trailer.
