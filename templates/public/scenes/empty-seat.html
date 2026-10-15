@@ -1,0 +1,39 @@
+{# Cómo unirse: a full stand with one seat left, glowing, and a sign over it:
+   "Tu lugar". The fans around it sway; the seat waits for the reader. #}
+{% from "public/scenes/_parts.html" import scene, skin %}
+{% call scene("empty-seat") %}
+  <style>
+    .seat-row { animation: seat-sway 2s ease-in-out infinite alternate; }
+    @keyframes seat-sway { to { transform: translateY(-6px); } }
+    .seat-glow { transform-box: fill-box; transform-origin: 50% 50%;
+                 animation: seat-glow 1.6s ease-in-out infinite alternate; }
+    @keyframes seat-glow { from { opacity: .35; transform: scale(.94); } to { opacity: 1; transform: scale(1.06); } }
+    .seat-sign { animation: seat-point 1s ease-in-out infinite alternate; }
+    @keyframes seat-point { to { transform: translateY(12px); } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#c3cfe6"/>
+  {% for row in range(8) %}{% set y = 150 + row * 106 %}
+  <rect y="{{ y + 52 }}" width="1600" height="12" fill="#8ea3c9"/>
+  <g class="seat-row" style="animation-delay: -{{ (row * 0.25) | round(2) }}s">
+    {% for i in range(22) %}{% set x = i * 76 + (row % 2) * 38 %}
+    <rect x="{{ x - 26 }}" y="{{ y }}" width="52" height="54" rx="10" fill="#0b2a5b"/>
+    {% if not (row == 5 and i == 10) %}
+    <circle cx="{{ x }}" cy="{{ y - 6 }}" r="15" fill="{{ skin(i + row) }}"/>
+    <rect x="{{ x - 20 }}" y="{{ y + 10 }}" width="40" height="34" rx="12" fill="#fff"/>
+    {% if (i + row) % 3 %}{% for dx in (-12, -2, 8) %}<rect x="{{ x + dx }}" y="{{ y + 10 }}" width="5" height="34" fill="#0b2a5b"/>{% endfor %}{% endif %}
+    {% endif %}
+    {% endfor %}
+  </g>
+  {% endfor %}
+
+  {# The empty seat (row 5, seat 10, at x 798, y 680) and its sign. #}
+  <rect class="seat-glow" x="764" y="670" width="68" height="74" rx="14" fill="none" stroke="#fff"
+        stroke-width="6"/>
+  <g class="seat-sign">
+    <rect x="718" y="560" width="160" height="56" rx="12" fill="#fff" stroke="#0b2a5b" stroke-width="4"/>
+    <text x="798" y="598" font-family="system-ui, sans-serif" font-size="28" font-weight="900"
+          text-anchor="middle" fill="#0b2a5b">TU LUGAR</text>
+    <path d="M784 616h28l-14 22z" fill="#0b2a5b"/>
+  </g>
+{% endcall %}

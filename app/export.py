@@ -25,12 +25,24 @@ from app.content import Page, Post
 from app.dates import spanish_date
 
 
+# The scene drawn behind each page: templates/public/scenes/<name>.html. The home
+# page carries the goal story; a topic's posts share its scene; the four seeded
+# pages have their own, found by slug; any other page the leader adds gets the default.
+HOME_SCENE = "goal"
+TOPIC_SCENES = {"match": "night-stadium", "lineup": "tactics-board", "coach": "touchline",
+                "signings": "signing", "fan-club-news": "fans-stand"}
+PAGE_SCENES = {"quiénes-somos": "fans-bus", "próximos-partidos": "scoreboard",
+               "reglas-de-la-casa": "referee", "cómo-unirse": "empty-seat"}
+DEFAULT_SCENE = "default"
+
+
 @dataclass(frozen=True)
 class TopicPage:
     """A topic's public page: every published post filed under it, newest first."""
     name: str
     path: str  # where it is written, from the site root: "tema/alineación.html"
     posts: list[Post]
+    scene: str
 
 
 def post_path(post: Post) -> str:
@@ -49,7 +61,7 @@ def export_site(conn: sqlite3.Connection, out: Path) -> int:
     posts = content.published_posts(conn)
     pages = content.published_pages(conn)
     topics = {key: TopicPage(name, f"tema/{content.slugify(name)}.html",
-                             [post for post in posts if post.topic == key])
+                             [post for post in posts if post.topic == key], TOPIC_SCENES[key])
               for key, name in content.TOPICS.items()}
 
     if out.exists():
@@ -57,14 +69,16 @@ def export_site(conn: sqlite3.Connection, out: Path) -> int:
     out.mkdir(parents=True)
     shutil.copyfile(settings.TEMPLATES / "public" / "style.css", out / "style.css")
     env = _environment(list(topics.values()), pages)
-    _write(env, out, "index.html", "public/home.html")
+    _write(env, out, "index.html", "public/home.html", scene=HOME_SCENE)
     for topic in topics.values():  # all five, even when empty, so no topic link breaks
-        _write(env, out, topic.path, "public/topic.html", topic=topic)
+        _write(env, out, topic.path, "public/topic.html", topic=topic, scene=topic.scene)
     for post in posts:
-        _write(env, out, post_path(post), "public/post.html", post=post,
-               topic=topics[post.topic], body_html=markdown.to_html(post.body))
+        topic = topics[post.topic]
+        _write(env, out, post_path(post), "public/post.html", post=post, topic=topic,
+               scene=topic.scene, body_html=markdown.to_html(post.body))
     for page in pages:
         _write(env, out, page_path(page), "public/page.html", page=page,
+               scene=PAGE_SCENES.get(page.slug, DEFAULT_SCENE),
                body_html=markdown.to_html(page.body))
     with conn:
         conn.execute("INSERT INTO site_state (id, last_export_at) VALUES (1, ?)"

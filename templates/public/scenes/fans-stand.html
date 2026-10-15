@@ -1,0 +1,53 @@
+{# Noticias del club de aficionados: the fan club's own stand. Rows jump, flags
+   wave, and the drums at the front keep the beat under the fan club's banner. #}
+{% from "public/scenes/_parts.html" import scene, crowd, skin, rayas %}
+{% call scene("fans-stand") %}
+  <style>
+    .scene-fans-stand .crowd-row { animation-name: stand-jump; animation-duration: .9s; }
+    @keyframes stand-jump { to { transform: translateY(-9px); } }
+    .stand-flag { transform-box: fill-box; transform-origin: 0 50%;
+                  animation: stand-wave 1.1s ease-in-out infinite alternate; }
+    @keyframes stand-wave { from { transform: skewY(-6deg); } to { transform: skewY(8deg) scaleX(.88); } }
+    .stand-stick { transform-box: fill-box; transform-origin: 100% 100%;
+                   animation: stand-hit .45s ease-in infinite alternate; }
+    @keyframes stand-hit { from { transform: rotate(-26deg); } to { transform: rotate(8deg); } }
+    .stand-boom { transform-box: fill-box; transform-origin: 50% 50%;
+                  animation: stand-boom .9s ease-out infinite; }
+    @keyframes stand-boom { from { transform: scale(.6); opacity: .8; } to { transform: scale(1.5); opacity: 0; } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#16376f"/>
+  {% for row in range(10) %}<rect y="{{ 140 + row * 52 }}" width="1600" height="4" fill="#0b2a5b"/>{% endfor %}
+  {{ crowd(10, 120, ["#ffffff", "#0b2a5b", "#ffffff", "#9fb3d9"], gap=52) }}
+
+  {# Flags on poles, held up from the crowd. #}
+  {% for x in (230, 600, 900, 1260) %}
+  <line x1="{{ x }}" y1="110" x2="{{ x }}" y2="420" stroke="#e8edf6" stroke-width="6"/>
+  <g class="stand-flag" style="animation-delay: -{{ (loop.index * 0.3) | round(2) }}s">
+    {{ rayas(x + 3, 110, 150, 96) }}
+  </g>
+  {% endfor %}
+
+  {# The fan club's banner over the railing. #}
+  <rect y="650" width="1600" height="90" fill="#fff"/>
+  <g fill="#0b2a5b">
+    {% for x in range(0, 1600, 60) if x < 560 or x > 1010 %}<rect x="{{ x }}" y="650" width="30" height="90"/>{% endfor %}
+  </g>
+  <text x="800" y="718" font-family="system-ui, sans-serif" font-size="64" font-weight="900"
+        text-anchor="middle" fill="#0b2a5b">ALBIAZUL</text>
+  <rect y="740" width="1600" height="10" fill="#8ea3c9"/>
+  <rect y="750" width="1600" height="250" fill="#0b2a5b"/>
+
+  {# The drums: a drummer behind each, sticks beating, each beat a ring. #}
+  {% for x in (640, 800, 960) %}
+  <circle cx="{{ x }}" cy="780" r="16" fill="{{ skin(loop.index0) }}"/>
+  <rect x="{{ x - 20 }}" y="796" width="40" height="40" rx="12" fill="#fff"/>
+  <circle class="stand-boom" cx="{{ x }}" cy="880" r="56" fill="none" stroke="#fff" stroke-width="5"
+          style="animation-delay: -{{ (loop.index0 * 0.3) | round(2) }}s"/>
+  <rect x="{{ x - 54 }}" y="830" width="108" height="100" rx="12" fill="#fff" stroke="#e8edf6" stroke-width="4"/>
+  {% for dx in (-36, -12, 12, 36) %}<rect x="{{ x + dx - 5 }}" y="834" width="10" height="92" fill="#0b2a5b"/>{% endfor %}
+  <ellipse cx="{{ x }}" cy="832" rx="54" ry="12" fill="#e8edf6" stroke="#9fb3d9" stroke-width="3"/>
+  <line class="stand-stick" x1="{{ x - 50 }}" y1="790" x2="{{ x - 10 }}" y2="826" stroke="#e5b53a"
+        stroke-width="7" stroke-linecap="round" style="animation-delay: -{{ (loop.index0 * 0.15) | round(2) }}s"/>
+  {% endfor %}
+{% endcall %}

@@ -1,0 +1,54 @@
+{# Fichajes: the new signing holds up the rayas at his presentation while the
+   photographers' flashes go off. Nobody in particular; the shirt has no name. #}
+{% from "public/scenes/_parts.html" import scene, rayas %}
+{% call scene("signing") %}
+  <style>
+    .signing-flash { opacity: 0; animation: signing-flash 2.8s infinite; }
+    @keyframes signing-flash { 0% { opacity: 0; } 3% { opacity: 1; } 10%, 100% { opacity: 0; } }
+    .signing-shirt { animation: signing-lift 2.4s ease-in-out infinite alternate; }
+    @keyframes signing-lift { to { transform: translateY(-8px); } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#0b2a5b"/>
+  <g fill="#12346c">{% for x in range(0, 1600, 120) %}<rect x="{{ x }}" width="60" height="820"/>{% endfor %}</g>
+  <rect y="820" width="1600" height="180" fill="#061d42"/>
+  {# Roll-up banners in rayas either side of the stage. #}
+  {% for x in (250, 1250) %}
+  {{ rayas(x, 250, 100, 560, outline=0) }}
+  <rect x="{{ x - 10 }}" y="806" width="120" height="14" rx="4" fill="#8ea3c9"/>
+  {% endfor %}
+
+  {# The signing holds the shirt up by its shoulders; it hides his arms. #}
+  <circle cx="800" cy="330" r="30" fill="#8d5b3a"/>
+  <path d="M770 326a30 30 0 0 1 60 0q-30-14-60 0z" fill="#1d130c"/>
+  <rect x="760" y="610" width="80" height="120" fill="#1b2235"/>
+  <g class="signing-shirt">
+    <path d="M700 420l60-36h80l60 36-28 58h-30v170H758V478h-30z" fill="#fff" stroke="#0b2a5b"
+          stroke-width="5" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      {% for x in (766, 790, 814) %}<rect x="{{ x }}" y="388" width="14" height="258"/>{% endfor %}
+    </g>
+    <path d="M782 384l18 22 18-22" fill="none" stroke="#0b2a5b" stroke-width="6"/>
+    <circle cx="712" cy="414" r="10" fill="#8d5b3a"/><circle cx="888" cy="414" r="10" fill="#8d5b3a"/>
+  </g>
+
+  {# The table and its microphones. #}
+  <rect x="560" y="720" width="480" height="100" rx="6" fill="#fff" stroke="#8ea3c9" stroke-width="4"/>
+  <rect x="560" y="720" width="480" height="18" fill="#c3cfe6"/>
+  {% for x in (700, 900) %}
+  <rect x="{{ x - 3 }}" y="680" width="6" height="40" fill="#1b2235"/><circle cx="{{ x }}" cy="676" r="9" fill="#1b2235"/>
+  {% endfor %}
+
+  {# The photographers, from behind, cameras up; each flash keeps its own time. #}
+  {% for x, delay in ((520, 0), (660, 1.1), (940, 0.5), (1080, 1.7), (180, 2.2), (1420, 0.8)) %}
+  <g class="signing-flash" style="animation-delay: {{ delay }}s">
+    <circle cx="{{ x }}" cy="840" r="130" fill="#fff" opacity=".25"/>
+    <path d="M{{ x }} 800l10 30 30 10-30 10-10 30-10-30-30-10 30-10z" fill="#fff"/>
+  </g>
+  <g fill="#030f24">
+    <circle cx="{{ x }}" cy="930" r="34"/><rect x="{{ x - 60 }}" y="955" width="120" height="60" rx="30"/>
+    <rect x="{{ x - 28 }}" y="862" width="56" height="38" rx="6"/>
+  </g>
+  <circle cx="{{ x }}" cy="881" r="12" fill="#2f4f86"/>
+  {% endfor %}
+{% endcall %}

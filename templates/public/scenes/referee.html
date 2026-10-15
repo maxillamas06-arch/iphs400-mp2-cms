@@ -1,0 +1,49 @@
+{# Reglas de la casa: the referee holds up a card, yellow then red, and blows his
+   whistle, while a player in grey protests. The house rules, refereed. #}
+{% from "public/scenes/_parts.html" import scene, day_stand %}
+{% call scene("referee") %}
+  <style>
+    .referee-red { animation: referee-red 5s steps(1) infinite; }
+    @keyframes referee-red { 0% { opacity: 0; } 50% { opacity: 1; } }
+    .referee-card { animation: referee-raise 2.5s ease-in-out infinite alternate; }
+    @keyframes referee-raise { to { transform: translateY(-10px); } }
+    .referee-whistle { animation: referee-blow 1.2s steps(2) infinite; }
+    @keyframes referee-blow { 50% { opacity: 0; } }
+  </style>
+
+  {{ day_stand() }}
+  <g fill="#c3d9b4"><rect y="560" width="1600" height="70"/><rect y="740" width="1600" height="90"/></g>
+  <path d="M0 520H1600M300 520C500 640 1100 640 1300 520" fill="none" stroke="#fff" stroke-width="5" opacity=".8"/>
+
+  {# The player, hands on his head: feet at (660, 820). #}
+  <g stroke="#2d3441" stroke-width="10" stroke-linecap="round">
+    <line x1="652" y1="760" x2="646" y2="816"/><line x1="668" y1="760" x2="676" y2="816"/>
+  </g>
+  <rect x="638" y="736" width="44" height="26" rx="4" fill="#5d6678"/>
+  <g stroke="#e0b48a" stroke-width="8" stroke-linecap="round">
+    <path d="M640 690l-22-26 30-20M680 690l22-26-30-20" fill="none"/>
+  </g>
+  <rect x="636" y="676" width="48" height="64" rx="9" fill="#9aa5b8"/>
+  <circle cx="660" cy="652" r="18" fill="#e0b48a"/>
+
+  {# The referee, in black: feet at (820, 830), card held high, whistle in his mouth. #}
+  <g stroke="#1a1a1a" stroke-width="11" stroke-linecap="round">
+    <line x1="810" y1="770" x2="804" y2="826"/><line x1="830" y1="770" x2="838" y2="826"/>
+  </g>
+  <rect x="796" y="744" width="48" height="28" rx="4" fill="#1a1a1a"/>
+  <line x1="800" y1="694" x2="770" y2="742" stroke="#b98258" stroke-width="9" stroke-linecap="round"/>
+  <rect x="794" y="680" width="52" height="70" rx="10" fill="#1a1a1a"/>
+  <rect x="804" y="688" width="10" height="5" fill="#e5b53a"/>
+  <g class="referee-card">
+    <line x1="842" y1="692" x2="878" y2="590" stroke="#b98258" stroke-width="9" stroke-linecap="round"/>
+    <rect x="862" y="530" width="44" height="62" rx="5" fill="#f2c94c" stroke="#1a1a1a" stroke-width="3"/>
+    <rect class="referee-red" x="862" y="530" width="44" height="62" rx="5" fill="#d9363e"
+          stroke="#1a1a1a" stroke-width="3"/>
+  </g>
+  <circle cx="820" cy="654" r="20" fill="#b98258"/>
+  <path d="M800 650a20 20 0 0 1 40 0q-20-10-40 0z" fill="#1a1a1a"/>
+  <rect x="826" y="660" width="16" height="7" rx="3" fill="#9aa5b8"/>
+  <g class="referee-whistle" stroke="#0b2a5b" stroke-width="4" stroke-linecap="round">
+    <line x1="850" y1="652" x2="866" y2="644"/><line x1="852" y1="664" x2="872" y2="664"/>
+  </g>
+{% endcall %}

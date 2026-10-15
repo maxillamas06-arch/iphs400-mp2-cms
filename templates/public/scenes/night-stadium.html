@@ -1,0 +1,55 @@
+{# Partido: a night match. Floodlights hum, stars twinkle, and the crowd does the
+   wave: each column of fans stands up a moment after the one to its left. #}
+{% from "public/scenes/_parts.html" import scene, skin %}
+{% call scene("night-stadium") %}
+  <style>
+    .night-star { animation: night-twinkle 2.4s ease-in-out infinite alternate; }
+    @keyframes night-twinkle { from { opacity: .2; } to { opacity: 1; } }
+    .night-glow { animation: night-hum 3s ease-in-out infinite alternate; }
+    @keyframes night-hum { from { opacity: .1; } to { opacity: .22; } }
+    .night-ola { animation: night-ola 4s ease-in-out infinite; }
+    @keyframes night-ola { 0%, 12%, 100% { transform: none; } 6% { transform: translateY(-16px); } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#0b1f45"/>
+  {% for i in range(40) %}
+  <circle class="night-star" cx="{{ (i * 397 + 83) % 1600 }}" cy="{{ 20 + (i * 211) % 260 }}"
+          r="{{ (1.5 + (i % 3) * 0.8) | round(2) }}" fill="#fff" style="animation-delay: -{{ ((i % 8) * 0.3) | round(2) }}s"/>
+  {% endfor %}
+
+  {# Floodlights: a pylon, a bank of lamps, a glow, and a faint beam onto the pitch. #}
+  {% for x in (260, 620, 980, 1340) %}
+  <path d="M{{ x - 6 }} 130L{{ x - 160 }} 900H{{ x + 160 }}L{{ x + 6 }} 130Z" fill="#fff" opacity=".04"/>
+  <rect x="{{ x - 4 }}" y="130" width="8" height="250" fill="#2f4f86"/>
+  <circle class="night-glow" cx="{{ x }}" cy="112" r="90" fill="#fff"/>
+  <rect x="{{ x - 36 }}" y="96" width="72" height="34" rx="4" fill="#e8edf6"/>
+  <g fill="#fff8d6">
+    {% for dx in (-24, -8, 8, 24) %}<circle cx="{{ x + dx }}" cy="106" r="5"/><circle cx="{{ x + dx }}" cy="120" r="5"/>{% endfor %}
+  </g>
+  {% endfor %}
+
+  {# The stand, its roof edge, and the crowd in columns so the wave can travel. #}
+  <path d="M0 600V360C400 320 1200 320 1600 360V600Z" fill="#142f63"/>
+  <path d="M0 360C400 320 1200 320 1600 360" fill="none" stroke="#e8edf6" stroke-width="6"/>
+  {% set shirts = ["#e8edf6", "#ffffff", "#9fb3d9", "#5b7fc0", "#2f4f86"] %}
+  {% for i in range(48) %}
+  <g class="night-ola" style="animation-delay: {{ (i * 0.05) | round(2) }}s">
+    {% for row in range(5) %}{% set x = 18 + i * 34 + (row % 2) * 17 %}{% set y = 386 + row * 44 %}
+    <rect x="{{ x - 11 }}" y="{{ y + 9 }}" width="22" height="16" rx="7" fill="{{ shirts[(i * 7 + row * 3) % 5] }}"/>
+    <circle cx="{{ x }}" cy="{{ y }}" r="10" fill="{{ skin(i + row) }}"/>
+    {% endfor %}
+  </g>
+  {% endfor %}
+
+  {# Boards and the lit pitch. #}
+  {% for i in range(8) %}
+  <rect x="{{ i * 200 }}" y="600" width="200" height="30" fill="{{ '#1d3d7a' if i % 2 else '#0b2a5b' }}"/>
+  {% endfor %}
+  <rect y="630" width="1600" height="370" fill="#2c6a4c"/>
+  <g fill="#30744f"><rect y="680" width="1600" height="60"/><rect y="820" width="1600" height="80"/></g>
+  <g fill="none" stroke="#fff" stroke-width="4" opacity=".85">
+    <line x1="800" y1="630" x2="800" y2="1000"/>
+    <ellipse cx="800" cy="800" rx="210" ry="74"/>
+  </g>
+  <circle cx="800" cy="800" r="6" fill="#fff"/>
+{% endcall %}

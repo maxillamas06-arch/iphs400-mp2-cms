@@ -1,15 +1,35 @@
 {% extends "public/base.html" %}
+{# The scene (the goal) sits inside the goal story, not before the header, so the
+   story's scroll can drive it. Each caption's gap brings the next one up near the
+   bottom of the screen during its beat in scenes/goal.html (the run at 15%, the goal
+   at 48%, the cup at 100%) and keeps the scoreboard clear when it turns. #}
+{% block scene %}{% endblock %}
 {% block banner %}{% include "public/_cerro_de_la_silla.html" %}{% endblock %}
 {% block content %}
-  <h1>{{ site_title }}</h1>
-  <p>Lo que opinamos los aficionados de Rayados, tema por tema.</p>
+  <div class="card">
+    <h1>{{ site_title }}</h1>
+    <p>Lo que opinamos los aficionados de Rayados, tema por tema.</p>
+  </div>
+  <div class="story">
+    {% include "public/scenes/" ~ scene ~ ".html" %}
+    <p class="card caption" style="margin-bottom: 85vh"><strong>13 de diciembre de
+      2009, Estadio Azul.</strong> Vuelta de la final del Apertura 2009. Al 90', Humberto
+      Suazo, con el 26, sella el campeonato: Cruz Azul 1–2 Rayados, global 4–6. Desliza
+      hacia abajo y vuélvelo a vivir.</p>
+    <p class="card caption" style="margin-bottom: 70vh"><strong>Minuto 90.</strong> Van 1–1
+      y el 26 arranca hacia la portería de Cruz Azul.</p>
+    <p class="card caption" style="margin-bottom: 115vh"><strong>¡Gol de Suazo!</strong>
+      La red se sacude: Cruz Azul 1–2 Rayados (De Nigris 54', Suazo 90').</p>
+    <p class="card caption" style="margin-bottom: 15vh"><strong>¡Rayados campeón del
+      Apertura 2009!</strong> Global 4–6. ¡Arriba la copa!</p>
+  </div>
   {% for topic in topics if topic.posts %}
-  <section>
+  <section class="card">
     <h2><a href="{{ href(topic.path) }}">{{ topic.name }}</a></h2>
     {% with posts = topic.posts[:3] %}{% include "public/_posts.html" %}{% endwith %}
     <p><a href="{{ href(topic.path) }}">Ver todos</a></p>
   </section>
   {% else %}
-  <p>Todavía no hay publicaciones.</p>
+  <p class="card">Todavía no hay publicaciones.</p>
   {% endfor %}
 {% endblock %}

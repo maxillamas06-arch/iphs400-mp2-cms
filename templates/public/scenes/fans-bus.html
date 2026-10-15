@@ -1,0 +1,83 @@
+{# Quiénes somos: the fan club's bus on the road to the stadium, flags out of the
+   windows. The road and the clouds slide past; the bus bobs along. #}
+{% from "public/scenes/_parts.html" import scene, skin, rayas %}
+{% call scene("fans-bus") %}
+  <style>
+    .bus-clouds { animation: bus-drift 40s linear infinite; }
+    @keyframes bus-drift { to { transform: translateX(-400px); } }
+    .bus-dashes { animation: bus-road .5s linear infinite; }
+    @keyframes bus-road { to { transform: translateX(-140px); } }
+    .bus-body { animation: bus-bob .35s ease-in-out infinite alternate; }
+    @keyframes bus-bob { to { transform: translateY(-4px); } }
+    .bus-wheel { transform-box: fill-box; transform-origin: 50% 50%;
+                 animation: bus-spin .6s linear infinite; }
+    @keyframes bus-spin { to { transform: rotate(360deg); } }
+    .bus-flag { transform-box: fill-box; transform-origin: 100% 50%;
+                animation: bus-wave .5s ease-in-out infinite alternate; }
+    @keyframes bus-wave { from { transform: skewY(-8deg); } to { transform: skewY(6deg) scaleX(.85); } }
+    .bus-puff { transform-box: fill-box; transform-origin: 50% 50%;
+                animation: bus-puff 1.4s ease-out infinite; }
+    @keyframes bus-puff { from { transform: scale(.4); opacity: .7; }
+                          to { transform: translateX(-90px) scale(1.6); opacity: 0; } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#dfe7f4"/>
+  <g class="bus-clouds" fill="#fff">
+    {% for x in (120, 520, 920, 1320, 1720) %}
+    <ellipse cx="{{ x }}" cy="{{ 150 + (loop.index0 % 2) * 60 }}" rx="90" ry="22"/>
+    <ellipse cx="{{ x + 40 }}" cy="{{ 136 + (loop.index0 % 2) * 60 }}" rx="50" ry="26"/>
+    {% endfor %}
+  </g>
+  {# A far sierra, and the stadium waiting at the end of the road. #}
+  <path d="M0 640V520C140 470 260 500 380 450S600 420 720 470S940 410 1080 460S1320 430 1440 480
+    S1560 470 1600 490V640Z" fill="#b9c7e2"/>
+  <path d="M1220 640V590C1300 560 1480 560 1560 590V640Z" fill="#8ea3c9"/>
+  <rect y="640" width="1600" height="80" fill="#cfe2c3"/>
+  <g transform="translate(1150 560)">
+    <rect x="-4" y="0" width="8" height="120" fill="#8a93a6"/>
+    <rect x="-80" y="-6" width="160" height="50" rx="6" fill="#fff" stroke="#0b2a5b" stroke-width="4"/>
+    <text x="-12" y="28" font-family="system-ui, sans-serif" font-size="24" font-weight="800"
+          text-anchor="middle" fill="#0b2a5b">ESTADIO</text>
+    <path d="M50 8l20 11-20 11z" fill="#0b2a5b"/>
+  </g>
+
+  {# The road. #}
+  <rect y="720" width="1600" height="280" fill="#3a4357"/>
+  <rect y="720" width="1600" height="8" fill="#8a93a6"/>
+  <g class="bus-dashes" fill="#e8edf6">
+    {% for x in range(0, 1760, 140) %}<rect x="{{ x }}" y="900" width="70" height="10" rx="4"/>{% endfor %}
+  </g>
+
+  {# The bus: rayas on the lower panel, fans at the windows, flags on the roof. #}
+  {% for x in (560, 540) %}<circle class="bus-puff" cx="{{ x }}" cy="800" r="16" fill="#c3cfe6"
+          style="animation-delay: -{{ loop.index0 * 0.7 }}s"/>{% endfor %}
+  <g class="bus-body">
+    {% for x in (650, 760) %}
+    <line x1="{{ x }}" y1="574" x2="{{ x - 20 }}" y2="470" stroke="#0b2a5b" stroke-width="5"/>
+    <g class="bus-flag" style="animation-delay: -{{ loop.index0 * 0.2 }}s">
+      {{ rayas(x - 102, 470, 82, 52) }}
+    </g>
+    {% endfor %}
+    <path d="M590 580h380c24 0 36 16 40 40l6 150H590z" fill="#fff" stroke="#0b2a5b" stroke-width="5"
+          stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      {% for x in range(600, 1000, 28) %}<rect x="{{ x }}" y="712" width="14" height="56"/>{% endfor %}
+    </g>
+    <text x="800" y="702" font-family="system-ui, sans-serif" font-size="32" font-weight="900"
+          text-anchor="middle" fill="#0b2a5b">ALBIAZUL</text>
+    {% for x in range(604, 900, 72) %}
+    <rect x="{{ x }}" y="596" width="62" height="64" rx="6" fill="#9fb3d9"/>
+    <circle cx="{{ x + 31 }}" cy="628" r="13" fill="{{ skin(loop.index0) }}"/>
+    <rect x="{{ x + 17 }}" y="642" width="28" height="18" rx="8" fill="{{ '#0b2a5b' if loop.index0 % 2 else '#fff' }}"/>
+    {% endfor %}
+    <path d="M948 596h22c14 0 24 10 26 24l4 44h-52z" fill="#c3cfe6" stroke="#0b2a5b" stroke-width="3"/>
+    <rect x="1000" y="740" width="18" height="14" rx="3" fill="#e5b53a"/>
+  </g>
+  {% for x in (680, 920) %}
+  <circle cx="{{ x }}" cy="776" r="36" fill="#1b2235"/>
+  <g class="bus-wheel">
+    <circle cx="{{ x }}" cy="776" r="16" fill="#c9ced8"/>
+    <path d="M{{ x }} 760v32M{{ x - 16 }} 776h32" stroke="#1b2235" stroke-width="5"/>
+  </g>
+  {% endfor %}
+{% endcall %}

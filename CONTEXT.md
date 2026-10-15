@@ -78,6 +78,10 @@ _Avoid_: Club news (ambiguous), official news, announcements
 The fixed line on every public page saying the site is a fan site not affiliated with Club de Fútbol Monterrey, in Spanish with the English line beneath.
 _Avoid_: Legal notice, footer (the footer is where it sits, not what it is)
 
+**Scene** (*Escena*):
+The drawing behind a public page, which moves a little. The home page's scene is the **goal story**: Suazo's goal in the Apertura 2009 final, told as the reader scrolls. Each topic has its own scene (a post shows its topic's), each of the four seeded pages has its own, and any other page gets the default. Drawn for this site: never a crest, logo or photo.
+_Avoid_: Background image, wallpaper, hero
+
 ### Post lifecycle
 
 **Draft** (*Borrador*):

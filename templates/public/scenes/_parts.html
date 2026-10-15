@@ -1,0 +1,49 @@
+{# Drawing parts the scenes share, in the scenes' 1600 x 1000 frame. Import with
+   {% from "public/scenes/_parts.html" import scene, crowd, ... %}. #}
+
+{# Every scene's <svg>: the 1600 x 1000 frame, cropped around its middle to fill the
+   screen, hidden from screen readers, and named by data-scene. Use as
+   {% call scene("referee") %}...{% endcall %}. #}
+{% macro scene(name) -%}
+<svg class="scene scene-{{ name }}" data-scene="{{ name }}" viewBox="0 0 1600 1000"
+     preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  {{- caller() }}
+</svg>
+{%- endmacro %}
+
+{# One of three skin tones, picked by any whole number, so a crowd looks mixed. #}
+{% macro skin(n) %}{{ ["#b98258", "#e0b48a", "#8d5b3a"][n % 3] }}{% endmacro %}
+
+{# Rows of fans across the whole width, heads at y, y + gap, ... Each row is one
+   <g class="crowd-row">, started a little after the row above it, so the bob in
+   style.css ripples up the stand. #}
+{% macro crowd(rows, y, shirts, gap=60) -%}
+  {% for row in range(rows) %}
+  <g class="crowd-row" style="animation-delay: -{{ (row * 0.35) | round(2) }}s">
+    {% for i in range(48) %}{% set x = 18 + i * 34 + (row % 2) * 17 %}
+    <rect x="{{ x - 12 }}" y="{{ y + row * gap + 10 }}" width="24" height="18" rx="8"
+          fill="{{ shirts[(i * 7 + row * 3) % shirts | length] }}"/>
+    <circle cx="{{ x }}" cy="{{ y + row * gap }}" r="11" fill="{{ skin(i + row) }}"/>
+    {% endfor %}
+  </g>
+  {% endfor %}
+{%- endmacro %}
+
+{# A day match seen from the pitch: sky, the stand under its roof with four rows of
+   fans, and the grass from y 466 down. #}
+{% macro day_stand() -%}
+  <rect width="1600" height="1000" fill="#dfe7f4"/>
+  <rect y="150" width="1600" height="26" fill="#8ea3c9"/>
+  <rect y="176" width="1600" height="290" fill="#c3cfe6"/>
+  {{ crowd(4, 204, ["#0b2a5b", "#ffffff", "#6f8fc6", "#9fb3d9"]) }}
+  <rect y="466" width="1600" height="534" fill="#cfe2c3"/>
+{%- endmacro %}
+
+{# A flag or banner in rayas, top left at (x, y): white, with three navy stripes
+   in the second, fourth and sixth sevenths. #}
+{% macro rayas(x, y, width, height, outline=3) -%}
+  <rect x="{{ x }}" y="{{ y }}" width="{{ width }}" height="{{ height }}" fill="#fff"
+        {%- if outline %} stroke="#0b2a5b" stroke-width="{{ outline }}"{% endif %}/>
+  {% for k in (1, 3, 5) %}<rect x="{{ (x + width * k / 7) | round(1) }}" y="{{ y }}"
+        width="{{ (width / 7) | round(1) }}" height="{{ height }}" fill="#0b2a5b"/>{% endfor %}
+{%- endmacro %}

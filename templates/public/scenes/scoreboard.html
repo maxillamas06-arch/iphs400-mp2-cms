@@ -1,0 +1,45 @@
+{# Próximos partidos: the stadium's big screen shows the month, with the match days
+   lit up, while the bulbs round its frame chase each other at dusk. A plain grid
+   of days: no fixtures, no month name, so it never goes out of date. #}
+{% from "public/scenes/_parts.html" import scene, crowd %}
+{% call scene("scoreboard") %}
+  <style>
+    .board-bulb { animation: board-chase 1s steps(1) infinite; }
+    .board-bulb-odd { animation-delay: -.5s; }
+    @keyframes board-chase { 50% { fill: #5b4a1a; } }
+    .board-day { animation: board-pulse 1.6s ease-in-out infinite alternate; }
+    @keyframes board-pulse { from { opacity: .45; } to { opacity: 1; } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#13336b"/>
+  <rect y="320" width="1600" height="200" fill="#1d4180"/>
+  <rect y="520" width="1600" height="200" fill="#2b5194"/>
+  {% for i in range(24) %}
+  <circle cx="{{ (i * 433 + 61) % 1600 }}" cy="{{ 30 + (i * 173) % 240 }}" r="2" fill="#fff" opacity=".7"/>
+  {% endfor %}
+
+  {# The screen on its legs, framed with bulbs. #}
+  <rect x="640" y="660" width="24" height="120" fill="#0b2a5b"/><rect x="936" y="660" width="24" height="120" fill="#0b2a5b"/>
+  <rect x="560" y="150" width="480" height="520" rx="14" fill="#061d42" stroke="#8ea3c9" stroke-width="6"/>
+  {% macro bulb(x, y) %}<circle class="board-bulb{{ ' board-bulb-odd' if ((x + y) // 30) % 2 else '' }}"
+          cx="{{ x }}" cy="{{ y }}" r="6" fill="#e5b53a"/>{% endmacro %}
+  {% for x in range(584, 1030, 30) %}{{ bulb(x, 166) }}{{ bulb(x, 654) }}{% endfor %}
+  {% for y in range(196, 640, 30) %}{{ bulb(576, y) }}{{ bulb(1024, y) }}{% endfor %}
+  <g font-family="system-ui, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="800" y="230" font-size="34" fill="#e5b53a">PRÓXIMOS PARTIDOS</text>
+    <g font-size="22" fill="#9fb3d9">
+      {% for letter in "LMMJVSD" %}<text x="{{ 611 + loop.index0 * 63 }}" y="280">{{ letter }}</text>{% endfor %}
+    </g>
+    {# Saturdays are match days. #}
+    {% for day in range(1, 32) %}{% set col = (day - 1) % 7 %}{% set row = (day - 1) // 7 %}
+    {% set x = 611 + col * 63 %}{% set y = 336 + row * 66 %}
+    {% if col == 5 %}<circle class="board-day" cx="{{ x }}" cy="{{ y - 9 }}" r="26" fill="#e5b53a"
+            style="animation-delay: -{{ (row * 0.3) | round(2) }}s"/>{% endif %}
+    <text x="{{ x }}" y="{{ y }}" font-size="24" fill="{{ '#061d42' if col == 5 else '#e8edf6' }}">{{ day }}</text>
+    {% endfor %}
+  </g>
+
+  {# The top of the stand, with fans looking up at the screen. #}
+  <path d="M0 1000V760C400 720 1200 720 1600 760V1000Z" fill="#0b2a5b"/>
+  {{ crowd(4, 790, ["#e8edf6", "#ffffff", "#9fb3d9", "#5b7fc0"], gap=50) }}
+{% endcall %}
