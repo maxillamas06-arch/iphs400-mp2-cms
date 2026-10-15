@@ -1,8 +1,9 @@
 {% extends "public/base.html" %}
 {# The scene (the goal) sits inside the goal story, not before the header, so the
-   story's scroll can drive it. Each caption's gap brings the next one up near the
-   bottom of the screen during its beat in scenes/goal.html (the run at 15%, the goal
-   at 48%, the cup at 100%) and keeps the scoreboard clear when it turns. #}
+   story's scroll can drive it. The gaps time the captions to the beats in
+   scenes/goal.html: "Minuto 90" passes during the run and is off the top before the
+   shot (36%), when the goal is high on the screen; "¡Gol!" comes up from the bottom
+   as the ball goes in (42%); the last caption sits under the cup at the end. #}
 {% block scene %}{% endblock %}
 {% block banner %}{% include "public/_cerro_de_la_silla.html" %}{% endblock %}
 {% block content %}
@@ -12,11 +13,11 @@
   </div>
   <div class="story">
     {% include "public/scenes/" ~ scene ~ ".html" %}
-    <p class="card caption" style="margin-bottom: 85vh"><strong>13 de diciembre de
+    <p class="card caption" style="margin-bottom: 59vh"><strong>13 de diciembre de
       2009, Estadio Azul.</strong> Vuelta de la final del Apertura 2009. Al 90', Humberto
       Suazo, con el 26, sella el campeonato: Cruz Azul 1–2 Rayados, global 4–6. Desliza
       hacia abajo y vuélvelo a vivir.</p>
-    <p class="card caption" style="margin-bottom: 70vh"><strong>Minuto 90.</strong> Van 1–1
+    <p class="card caption" style="margin-bottom: 90vh"><strong>Minuto 90.</strong> Van 1–1
       y el 26 arranca hacia la portería de Cruz Azul.</p>
     <p class="card caption" style="margin-bottom: 115vh"><strong>¡Gol de Suazo!</strong>
       La red se sacude: Cruz Azul 1–2 Rayados (De Nigris 54', Suazo 90').</p>
