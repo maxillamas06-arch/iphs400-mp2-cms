@@ -76,7 +76,11 @@
     .goal-flag { transform-box: fill-box; transform-origin: 0 50%;
                  animation: goal-wave 1.2s ease-in-out infinite alternate; }
     @keyframes goal-wave { to { transform: skewY(8deg) scaleX(.9); } }
+    /* Each piece's tilt is CSS, not a transform attribute: transform-origin would
+       apply to the attribute too and swing the piece about the wrong point, which
+       shows whenever the flutter stops, as under reduced motion. */
     .goal-confetti rect { transform-box: fill-box; transform-origin: 50% 50%;
+                          transform: rotate(var(--r));
                           animation: goal-flutter 1.1s ease-in-out infinite alternate; }
     @keyframes goal-flutter { from { transform: rotate(var(--r)); }
                               to { transform: rotate(var(--r)) scaleX(.15); } }
@@ -207,9 +211,8 @@
     <g class="goal-confetti" stroke="#0b2a5b" stroke-width="1.5">
       {% for i in range(layer, 57, 3) %}
       {% set x = (i * 293 + 47) % 1600 %}{% set y = 40 + (i * 157) % 660 %}{% set r = (i * 67) % 180 %}
-      {% if not (580 < x < 1010 and 130 < y < 300) %}{# none lands on the scoreboard #}
+      {% if not (560 < x < 1010 and 100 < y < 300) %}{# none lands on the scoreboard #}
       <rect x="{{ x }}" y="{{ y }}" width="12" height="20" rx="2" fill="{{ papers[i % 4] }}"
-            transform="rotate({{ r }} {{ x + 6 }} {{ y + 10 }})"
             style="--r: {{ r }}deg; animation-delay: -{{ ((i % 7) * 0.2) | round(2) }}s"/>
       {% endif %}
       {% endfor %}
