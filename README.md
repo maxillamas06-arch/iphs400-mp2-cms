@@ -6,7 +6,7 @@ static public site. The admin console (FastAPI, Jinja and SQLite) runs only on t
 computer; `cms publish` exports the published content to `site/`, and `cms deploy` puts it
 on GitHub Pages (ADR-001).
 
-The spec is issue #1 and the tickets are #2–#9, each with its code-review findings in a
+The spec is issue #1 and the tickets are #2–#10, each with its code-review findings in a
 comment. The vocabulary is in `CONTEXT.md`, and the decisions that shaped the design are in
 `docs/adr/`.
 
@@ -100,6 +100,6 @@ skills are mine, and I edited the rest.
 
 | Provider | Model | Sessions |
 |---|---|---|
-| Anthropic (Claude Code) | Claude Opus 5.5, xhigh | All of them: grill, spec, tickets, T01–T08, wrap-up |
+| Anthropic (Claude Code) | Claude Opus 5.5, xhigh | All of them: grill, spec, tickets, T01–T09, wrap-up |
 
 I never used the Plan B backend, so no commit has a `Backend:` trailer.

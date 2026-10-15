@@ -10,8 +10,8 @@ I built a small CMS for an unofficial Rayados fan club. Members write posts abou
 and the leader checks each one before it goes public. The admin console (FastAPI, Jinja and
 SQLite) runs only on the leader's computer. His *Actualizar el sitio* button exports the
 published posts and pages to static HTML and uploads it to GitHub Pages. All seven
-capabilities are in spec #1 and tickets #2–#9, and every ticket is closed with its review
-findings in a comment. The suite has 226 tests.
+capabilities are in spec #1 and tickets #2–#9; #10 is the public site's look. Every ticket
+is closed with its review findings in a comment. The suite has 230 tests.
 
 The grill (transcript 02, 2026-10-10) is where my decisions are:
 
@@ -25,7 +25,9 @@ The grill (transcript 02, 2026-10-10) is where my decisions are:
   (T07).
 - **The look.** I asked for the team's colours and "the stadium or the cerro de la silla or
   symbolic things", as long as they don't get in the way of the disclaimer. T08 drew both as
-  inline SVG, with no logos or photos.
+  inline SVG, with no logos or photos. Later I asked for more life (T09, #10): a drawn scene
+  behind every page, and Suazo's 90th-minute goal in the Apertura 2009 final told as you
+  scroll the home page.
 - **Phones.** This one went back and forth. I first said fans should write from their
   phones, then "ok nvm lets do it ur way". The AI took that as "put the console online later"
   and wrote an ADR-004 for it. I corrected it: "no i meant that u can only wirte from the
@@ -53,14 +55,21 @@ put the T03 site back, and the fixture `nothing_goes_online` in `tests/conftest.
 every test's default upload fail. The Spec reviewer had flagged that exact hole as
 "fragile" (Spec finding 5 in the #9 comment), and it bit while it was being fixed.
 
+**In T09 (#10), one of each.** The Spec reviewer caught the first caption saying Suazo
+scored "el gol del campeonato". At 1–1 Rayados already led on aggregate, so it now says he
+sealed it. No test or reviewer caught the other: with reduced motion turned on, the confetti
+landed on the scoreboard. It turned up only when I asked for a bug hunt, which drove the site
+in Chromium, WebKit (Safari's engine) and Firefox, and it was fixed in `7d05e69`.
+
 ## 3. Skills, prompts and resources
 
 - `/grill-with-docs`, then `/to-spec` and `/to-tickets` (transcript 02). The grill wrote
   `CONTEXT.md`, the ADRs and the field notes, and the spec and tickets went to GitHub Issues.
 - `/mattpocock-skills:implement #N` once per ticket, in a fresh session after `/clear`
-  (transcripts 03–09, and this last session for T08). It runs `/tdd` at the agreed seams and
+  (transcripts 03–10 for T01–T08, and 11 for T09). It runs `/tdd` at the agreed seams and
   ends with the two-axis `/code-review`: a Standards and a Spec reviewer in parallel.
-- gstack `browse` in T08, to check 390 px widths and take the 12 screenshots.
+- gstack `browse` in T08, to check 390 px widths and take the 12 screenshots, and in T09 to
+  watch the scenes at 390 and 1280 px. Playwright's WebKit and Firefox for the bug hunt.
 - Resources: the client brief, WordPress Playground (my field notes in
   `notes/cms-field-notes.md`), the manual and the rubric.
 
@@ -80,14 +89,17 @@ said Sonnet 5.5 at medium for the tickets, about 3% of the weekly cap each, and 
 all eight. I never switched: every session ran on Opus 5.5 at xhigh ("dont worry i want this
 model"). From `notes/usage-ledger.csv`:
 
-| Ticket | T01 | T02 | T03 | T04 | T05 | T06 | T07 | T08 |
-|---|---|---|---|---|---|---|---|---|
-| Weekly cap used | 3% | 4% | 4% | 3% | 3% | 3% | 3% | 3% |
-| Peak context | 19% | 27% | 29% | 24% | 25% | 25% | 22% | 26% |
+| Ticket | T01 | T02 | T03 | T04 | T05 | T06 | T07 | T08 | T09 |
+|---|---|---|---|---|---|---|---|---|---|
+| Weekly cap used | 3% | 4% | 4% | 3% | 3% | 3% | 3% | 3% | 5% |
+| Peak context | 19% | 27% | 29% | 24% | 25% | 25% | 22% | 26% | 32% |
 
 The eight tickets took 26% of the week (4% → 30%), inside the plan, even on the expensive
-model. The submission wrap-up after T08 took another 4%. No ticket's context passed 29%, so
-the rule to split a ticket that crosses 60% never came up. The 5-hour window was the real
+model. The submission wrap-up after T08 took another 4%. T01–T08 never passed 29% context,
+so the rule to split a ticket that crosses 60% never came up for them. T09 came after the
+wrap-up and was the most expensive ticket: eleven drawings, then browser checks in three
+engines. **[Check T09's final numbers in `notes/usage-ledger.csv` once its session ends; the
+table shows the ledger up to 21:27 on 2026-10-15.]** The 5-hour window was the real
 limit: it reached 99% during the T08 wrap-up, and I had to wait for it to reset. That same
 long session later ran out of context and compacted itself on 2026-10-12. It's the only
 compaction in `docs/process/compaction-log.md`, and it was `auto`, not the manual kind the
