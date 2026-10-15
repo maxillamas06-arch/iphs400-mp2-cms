@@ -7,6 +7,190 @@
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+  
+
+<svg class="scene scene-tactics-board" data-scene="tactics-board" viewBox="0 0 1600 1000"
+     preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <style>
+    .tactics-magnet { animation: tactics-place 2.4s ease-out both; }
+    @keyframes tactics-place { from { transform: translate(var(--dx), var(--dy)); } }
+    @supports (animation-timeline: scroll()) {
+      .tactics-magnet { animation-duration: auto; animation-delay: 0s;
+                        animation-timeline: scroll(root); animation-range: 0% 70%; }
+    }
+    .tactics-pass { animation: tactics-march 1s linear infinite; }
+    @keyframes tactics-march { to { stroke-dashoffset: -22; } }
+    .tactics-shirt { transform-box: fill-box; transform-origin: 50% 0;
+                     animation: tactics-sway 3s ease-in-out infinite alternate; }
+    @keyframes tactics-sway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+  </style>
+
+  <rect width="1600" height="1000" fill="#dfe5ef"/>
+  <rect y="880" width="1600" height="120" fill="#c3cfe6"/>
+  <rect y="870" width="1600" height="12" fill="#8ea3c9"/>
+
+  
+  
+  <circle cx="90" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -0.4s">
+    <path d="M30 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="60" y="262" width="12" height="188"/><rect x="84" y="260" width="12" height="190"/>
+      <rect x="108" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+  <circle cx="250" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -0.8s">
+    <path d="M190 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="220" y="262" width="12" height="188"/><rect x="244" y="260" width="12" height="190"/>
+      <rect x="268" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+  <circle cx="410" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -1.2s">
+    <path d="M350 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="380" y="262" width="12" height="188"/><rect x="404" y="260" width="12" height="190"/>
+      <rect x="428" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+  <circle cx="1190" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -1.6s">
+    <path d="M1130 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="1160" y="262" width="12" height="188"/><rect x="1184" y="260" width="12" height="190"/>
+      <rect x="1208" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+  <circle cx="1350" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -2.0s">
+    <path d="M1290 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="1320" y="262" width="12" height="188"/><rect x="1344" y="260" width="12" height="190"/>
+      <rect x="1368" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+  <circle cx="1510" cy="250" r="7" fill="#8ea3c9"/>
+  <g class="tactics-shirt" style="animation-delay: -2.4s">
+    <path d="M1450 290l40-30h40l40 30-20 40h-20v120h-80V330h-20z" fill="#fff"
+          stroke="#0b2a5b" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#0b2a5b">
+      <rect x="1480" y="262" width="12" height="188"/><rect x="1504" y="260" width="12" height="190"/>
+      <rect x="1528" y="262" width="12" height="188"/>
+    </g>
+  </g>
+  
+
+  
+  <rect x="590" y="140" width="420" height="720" rx="18" fill="#c9ced8" stroke="#8a93a6" stroke-width="4"/>
+  <rect x="606" y="156" width="388" height="688" rx="8" fill="#2b6a4f"/>
+  <g fill="none" stroke="#fff" stroke-width="4" opacity=".9">
+    <rect x="626" y="176" width="348" height="648"/>
+    <line x1="626" y1="500" x2="974" y2="500"/><circle cx="800" cy="500" r="54"/>
+    <rect x="700" y="176" width="200" height="90"/><rect x="750" y="176" width="100" height="36"/>
+    <rect x="700" y="734" width="200" height="90"/><rect x="750" y="788" width="100" height="36"/>
+  </g>
+  <rect x="640" y="866" width="320" height="34" rx="6" fill="#8a93a6"/>
+  <g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".55">
+    <path d="M690 230l24 24m0-24l-24 24M890 230l24 24m0-24l-24 24M790 400l24 24m0-24l-24 24"/>
+  </g>
+  <path class="tactics-pass" d="M800 556C770 470 780 400 800 330" fill="none" stroke="#fff"
+        stroke-width="4" stroke-dasharray="12 10" stroke-linecap="round"/>
+  <path d="M790 346l10-22 10 22" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+
+  
+  
+  
+  <g class="tactics-magnet" style="--dx: -140px; --dy: 93px;
+     animation-delay: 0.0s">
+    <circle cx="800" cy="790" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="800" y="796" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">1</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: -252px; --dy: 203px;
+     animation-delay: 0.12s">
+    <circle cx="940" cy="680" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="940" y="686" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">2</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: -134px; --dy: 191px;
+     animation-delay: 0.24s">
+    <circle cx="850" cy="692" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="850" y="698" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">4</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: -6px; --dy: 191px;
+     animation-delay: 0.36s">
+    <circle cx="750" cy="692" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="750" y="698" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">5</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 112px; --dy: 203px;
+     animation-delay: 0.48s">
+    <circle cx="660" cy="680" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="660" y="686" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">3</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 110px; --dy: 323px;
+     animation-delay: 0.6s">
+    <circle cx="690" cy="560" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="690" y="566" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">8</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 28px; --dy: 303px;
+     animation-delay: 0.72s">
+    <circle cx="800" cy="580" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="800" y="586" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">6</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: -54px; --dy: 323px;
+     animation-delay: 0.84s">
+    <circle cx="910" cy="560" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="910" y="566" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">10</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 204px; --dy: 543px;
+     animation-delay: 0.96s">
+    <circle cx="680" cy="340" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="680" y="346" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">11</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 112px; --dy: 583px;
+     animation-delay: 1.08s">
+    <circle cx="800" cy="300" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="800" y="306" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">9</text>
+  </g>
+  
+  <g class="tactics-magnet" style="--dx: 20px; --dy: 543px;
+     animation-delay: 1.2s">
+    <circle cx="920" cy="340" r="19" fill="#0b2a5b" stroke="#fff" stroke-width="4"/>
+    <text x="920" y="346" font-family="system-ui, sans-serif" font-size="17"
+          font-weight="800" text-anchor="middle" fill="#fff">7</text>
+  </g>
+  
+
+</svg>
   <header>
     <div class="stripes" aria-hidden="true"></div>
     <div class="band">
@@ -32,9 +216,10 @@
   
   <main>
     
-  <h1>Alineación</h1>
-  
-  <ul class="posts">
+  <div class="card">
+    <h1>Alineación</h1>
+    
+    <ul class="posts">
   
   <li>
     <a href="../posts/el-once-que-yo-pondr%C3%ADa-el-s%C3%A1bado.html">El once que yo pondría el sábado</a>
@@ -42,7 +227,8 @@
   </li>
   
 </ul>
-  
+    
+  </div>
 
   </main>
   <footer>
