@@ -28,6 +28,7 @@
     .danger { color: var(--bad); }
     button.danger { background: var(--bad); color: #fff; }
     .notice { background: var(--navy-soft); border-left: 4px solid var(--navy); padding: .5rem .75rem; }
+    .notice.failed { background: #fbe9ec; border-left-color: var(--bad); }
     .help, .meta { color: #4a4a4a; font-size: .9rem; margin: .25rem 0; }
     .lifecycle { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: .5rem; }
     .preview { margin-top: 2rem; border-top: 3px solid var(--navy); padding-top: .5rem; }
@@ -70,7 +71,8 @@
     {% endif %}
   </header>
   <main>
-    {% if message %}<p class="notice" role="status">{{ message }}</p>{% endif %}
+    {% if message %}<p class="notice{% if message_failed %} failed{% endif %}"
+       role="{{ 'alert' if message_failed else 'status' }}">{{ message }}</p>{% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>

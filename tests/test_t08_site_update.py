@@ -107,3 +107,23 @@ def test_every_test_app_without_a_fake_still_never_uploads_or_writes_site(
 
     assert "No se pudo subir a GitHub" in page, "the guard in conftest.py refused the upload"
     assert settings.SITE != settings.ROOT / "site", "the export went to a temporary folder"
+
+
+def notice_role(html: str) -> str | None:
+    """The role of the message shown after a button, or None when there is none."""
+    found = re.search(r'<p\b[^>]*\bclass="notice[^"]*"[^>]*\brole="([^"]+)"', html)
+    return found and found.group(1)
+
+
+def test_a_failed_site_update_is_shown_as_an_error_not_in_the_success_notice(
+        client_as, button_action, csrf_token, uploads, public_site):
+    leader = client_as("admin")
+    assert notice_role(update_site(leader, button_action, csrf_token).text) == "status"
+
+    uploads.failing = True
+    assert notice_role(update_site(leader, button_action, csrf_token).text) == "alert"
+
+    uploads.failing = False
+    public_site.rename(public_site.with_name("moved"))
+    public_site.write_text("not a folder")  # the export cannot write the site here
+    assert notice_role(update_site(leader, button_action, csrf_token).text) == "alert"

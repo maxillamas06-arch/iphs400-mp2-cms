@@ -20,11 +20,12 @@ def update_site(request: Request, conn: sqlite3.Connection = Depends(get_db)):
     except site_update.ExportFailed:
         flash(request, "No se pudo generar el sitio ✗, así que no se subió nada. Los lectores"
                        " siguen viendo la versión anterior. Vuelve a presionar Actualizar el"
-                       " sitio; si sigue fallando, pide ayuda con la carpeta del sitio.")
+                       " sitio; si sigue fallando, pide ayuda con la carpeta del sitio.",
+              failed=True)
     except site_update.UploadFailed:
         flash(request, "Sitio generado ✓ · No se pudo subir a GitHub ✗. Los lectores siguen"
                        " viendo la versión anterior. Revisa que la computadora tenga internet"
-                       " y vuelve a presionar Actualizar el sitio.")
+                       " y vuelve a presionar Actualizar el sitio.", failed=True)
     else:
         flash(request, "Sitio generado ✓ · Subido a GitHub ✓. Los lectores verán los cambios"
                        " en unos minutos.")

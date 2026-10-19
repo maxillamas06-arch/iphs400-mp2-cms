@@ -103,9 +103,11 @@ def signed_in_user(request: Request, conn: sqlite3.Connection = Depends(get_db))
     return user
 
 
-def flash(request: Request, message: str) -> None:
-    """Show this message on the next page rendered for this session, once."""
+def flash(request: Request, message: str, *, failed: bool = False) -> None:
+    """Show this message on the next page rendered for this session, once; as an
+    error when what the button did `failed`."""
     request.session["flash"] = message
+    request.session["flash_failed"] = failed
 
 
 def saved_message(message: str, fields: PostFields | PageFields, saved: Post | Page,
@@ -122,6 +124,8 @@ def render(request: Request, name: str, user: User | None = None,
            status_code: int = 200, **context):
     return templates.TemplateResponse(
         request, name, {"site_title": settings.SITE_TITLE, "user": user,
-                        "message": request.session.pop("flash", None), **context},
+                        "message": request.session.pop("flash", None),
+                        "message_failed": request.session.pop("flash_failed", False),
+                        **context},
         status_code=status_code,
     )
