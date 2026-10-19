@@ -45,7 +45,9 @@ def test_report_groups_by_phase(tmp_path):
                           "--ledger", str(p)], capture_output=True, text=True)
     assert "grill" in out.stdout and "10.0%" in out.stdout   # 5 -> 15
     assert "Opus" in out.stdout
-    assert "average weekly cost per ticket: 4.0%" in out.stdout
+    # 6 -> 8 -> 12: the rise into T01's first row is T01's too (it was 4.0% before
+    # the phase-boundary fix, which dropped that rise).
+    assert "average weekly cost per ticket: 6.0%" in out.stdout
 
 
 def test_forecast_flags_over_budget(tmp_path):
@@ -67,3 +69,29 @@ def test_backup_provider_shown(tmp_path):
     out = subprocess.run([sys.executable, str(ROOT / "scripts/usage_report.py"),
                           "--ledger", str(p)], capture_output=True, text=True)
     assert "@api.z.ai" in out.stdout
+
+
+def weekly(stdout, phase):
+    """The weekly figure the report prints on `phase`'s line."""
+    line = next(l for l in stdout.splitlines() if l.split()[:1] == [phase])
+    return line.split()[3]
+
+
+def report(tmp_path, *rows):
+    return subprocess.run([sys.executable, str(ROOT / "scripts/usage_report.py"),
+                           "--ledger", str(ledger(tmp_path, *rows))],
+                          capture_output=True, text=True).stdout
+
+
+def test_the_rise_into_a_phases_first_row_counts_toward_that_phase(tmp_path):
+    # The weekly meter read 4% before T01 and 7% after it (the real T01 in this ledger).
+    out = report(tmp_path, row("grill", 30, 4), row("T01", 35, 6), row("T01", 40, 7))
+    assert weekly(out, "T01") == "3.0%"
+
+
+def test_a_phase_that_comes_back_does_not_take_what_another_phase_spent_in_between(tmp_path):
+    # T08, then the submission wrap-up (+4%), then one more T08 turn that spent nothing.
+    out = report(tmp_path, row("T07", 10, 27), row("T08", 20, 30),
+                 row("submit", 30, 34), row("T08", 30, 34))
+    assert weekly(out, "T08") == "3.0%"
+    assert weekly(out, "submit") == "4.0%"

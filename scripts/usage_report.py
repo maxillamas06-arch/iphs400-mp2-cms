@@ -9,6 +9,10 @@ Why positive deltas: the 5-hour and weekly meters RESET (drop to 0) when their
 window rolls over, and the weekly one only ever climbs inside a week. Summing
 only the increases between consecutive rows measures what you actually spent
 and ignores the resets. That is what spend() does, and it is your exercise.
+
+Each rise belongs to the phase of the row it rises into, whatever the phase of
+the row before: the ledger writes a row at the end of each turn, so that rise
+was spent in that turn.
 """
 from __future__ import annotations
 
@@ -55,14 +59,20 @@ def to_float(text: str | None) -> float | None:
 
 
 def by_phase(rows: list[dict]) -> dict[str, dict]:
+    """Each phase's turns, models and providers, and what it spent of the 5-hour
+    ("five") and weekly meters: the rise from the reading before each of its rows."""
     phases: dict[str, dict] = defaultdict(
-        lambda: {"turns": 0, "five": [], "weekly": [], "models": set(), "providers": set()}
+        lambda: {"turns": 0, "five": 0.0, "weekly": 0.0, "models": set(), "providers": set()}
     )
+    last: dict[str, float | None] = {"five": None, "weekly": None}
     for row in rows:
         phase = phases[row.get("phase") or "unlabelled"]
         phase["turns"] += 1
-        phase["five"].append(to_float(row.get("five_h_pct")))
-        phase["weekly"].append(to_float(row.get("weekly_pct")))
+        for meter, column in (("five", "five_h_pct"), ("weekly", "weekly_pct")):
+            reading = to_float(row.get(column))
+            phase[meter] += spend([last[meter], reading])
+            if reading is not None:
+                last[meter] = reading
         if row.get("model"):
             phase["models"].add(row["model"])
         if row.get("provider"):
@@ -91,12 +101,12 @@ def main() -> None:
     for name, data in sorted(phases.items()):
         mix = ",".join(sorted(data["models"])) or "?"
         prov = ",".join(sorted(data["providers"] - {"anthropic"}))
-        print(f"{name:<14}{data['turns']:>6}{spend(data['five']):>9.1f}%"
-              f"{spend(data['weekly']):>8.1f}%  {mix}{(' @' + prov) if prov else ''}")
+        print(f"{name:<14}{data['turns']:>6}{data['five']:>9.1f}%"
+              f"{data['weekly']:>8.1f}%  {mix}{(' @' + prov) if prov else ''}")
 
     tickets = ticket_phases(phases)
     if tickets:
-        per = sum(spend(phases[t]["weekly"]) for t in tickets) / len(tickets)
+        per = sum(phases[t]["weekly"] for t in tickets) / len(tickets)
         print(f"\nTickets done: {len(tickets)} · average weekly cost per ticket: {per:.1f}%")
         last = next((to_float(r.get("weekly_pct")) for r in reversed(rows)
                      if to_float(r.get("weekly_pct")) is not None), None)
