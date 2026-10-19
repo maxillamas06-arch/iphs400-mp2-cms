@@ -11,7 +11,7 @@ and the leader checks each one before it goes public. The admin console (FastAPI
 SQLite) runs only on the leader's computer. His *Actualizar el sitio* button exports the
 published posts and pages to static HTML and uploads it to GitHub Pages. All seven
 capabilities are in spec #1 and tickets #2–#9; #10 is the public site's look. Every ticket
-is closed with its review findings in a comment. The suite has 230 tests.
+is closed with its review findings in a comment. The suite has 231 tests.
 
 The grill (transcript 02, 2026-10-10) is where my decisions are:
 
@@ -80,9 +80,10 @@ would have skipped, and whether any review finding changed something you cared a
 
 **Next:** my own idea from the grill. Members write and submit from their phones, and the
 leader's powers stay on his computer. That means a hosted server with HTTPS and a
-rate-limited login, which is the rubric's "live admin deploy". Smaller things I'd fix: the
-failed-upload message shows in the same calm blue box as success, and `usage_report.py`
-undercounts at phase boundaries (below).
+rate-limited login, which is the rubric's "live admin deploy". A smaller thing I'd fix:
+`usage_report.py` undercounts at phase boundaries (below). I had listed a second one, a
+failed upload showing in the same calm blue box as success, and had Claude fix it after
+T09: a failed export or upload now shows in a red box that screen readers announce.
 
 **Budget.** My plan (`notes/token-budget-plan.md`, committed before the first `/implement`)
 said Sonnet 5.5 at medium for the tickets, about 3% of the weekly cap each, and 25–30% for
@@ -91,19 +92,21 @@ model"). From `notes/usage-ledger.csv`:
 
 | Ticket | T01 | T02 | T03 | T04 | T05 | T06 | T07 | T08 | T09 |
 |---|---|---|---|---|---|---|---|---|---|
-| Weekly cap used | 3% | 4% | 4% | 3% | 3% | 3% | 3% | 3% | 5% |
-| Peak context | 19% | 27% | 29% | 24% | 25% | 25% | 22% | 26% | 32% |
+| Weekly cap used | 3% | 4% | 4% | 3% | 3% | 3% | 3% | 3% | 8% |
+| Peak context | 19% | 27% | 29% | 24% | 25% | 25% | 22% | 26% | 48%+ |
 
 The eight tickets took 26% of the week (4% → 30%), inside the plan, even on the expensive
 model. The submission wrap-up after T08 took another 4%. T01–T08 never passed 29% context,
 so the rule to split a ticket that crosses 60% never came up for them. T09 came after the
-wrap-up and was the most expensive ticket: eleven drawings, then browser checks in three
-engines. **[Check T09's final numbers in `notes/usage-ledger.csv` once its session ends; the
-table shows the ledger up to 21:27 on 2026-10-15.]** The 5-hour window was the real
-limit: it reached 99% during the T08 wrap-up, and I had to wait for it to reset. That same
-long session later ran out of context and compacted itself on 2026-10-12. It's the only
-compaction in `docs/process/compaction-log.md`, and it was `auto`, not the manual kind the
-manual asks for.
+wrap-up and was the most expensive ticket: eleven drawings, browser checks in three
+engines, then the goal redrawn as seen from above (34% → 42% of the week, counting a report
+update in the middle of it). It is also the one ticket that broke the 60% rule. The ledger's
+highest reading is 48%, but the session ran out of context during the long turn that redrew
+the goal and compacted itself at 23:18 UTC on 2026-10-15, so the real peak was higher than
+any row shows. I didn't split it. The 5-hour window was the real limit: it reached 99%
+during the T08 wrap-up, and I had to wait for it to reset. That same long session later ran
+out of context and compacted itself on 2026-10-12. Both compactions in
+`docs/process/compaction-log.md` were `auto`, not the manual kind the manual asks for.
 
 The numbers above count from the last ledger row *before* each ticket. After T01 I found
 that `usage_report.py` only counts rises between rows of the same phase. It reported T01 as
