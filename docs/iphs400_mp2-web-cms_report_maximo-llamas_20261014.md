@@ -36,7 +36,7 @@ The grill (transcript 02, 2026-10-10) is where my decisions are:
 Not every answer was mine. Some I answered with a single letter, and at one point I wrote "do
 the one that you think is the best for the set … I just want to have a good grade."
 
-**[Write this yourself: one decision you would make differently now, and why.]**
+One decision I made was to use Opus instead of Sonnet because I heard that a lot of my classmates were having problems with Sonnet and that it was taking them a lot of time. I don't think I would change that decision because Opus worked really well for me. The only thing I would probably change is using high effort instead of extra high because sometimes it took a lot of time between questions, which made the whole process slower.
 
 ## 2. Where the AI drifted, and what caught it
 
@@ -73,8 +73,7 @@ in Chromium, WebKit (Safari's engine) and Firefox, and it was fixed in `7d05e69`
 - Resources: the client brief, WordPress Playground (my field notes in
   `notes/cms-field-notes.md`), the manual and the rubric.
 
-**[Write this yourself: why these skills. For example, what the grill got out of you that you
-would have skipped, and whether any review finding changed something you cared about.]**
+I think the grill was really helpful because it made me think about things I wouldn't have thought about by myself. The questions were actually really relevant to the project and helped make the final result a lot better. I also liked how we went from the grill to the spec, then tickets, implementation, and code review because it made everything more organized. For example, the code review found a small mistake about Suazo's goal. It wasn't a big problem, but fixing it made the website a little better and more accurate.
 
 ## 4. What I'd add next, and what the budget data said
 

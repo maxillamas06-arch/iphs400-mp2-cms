@@ -69,7 +69,7 @@ Before submitting, run `uv run python scripts/check_submission.py --stage 2`.
 ## Generative AI Use Statement
 
 **Models.** Claude Opus 5.5 at xhigh effort, in Claude Code, for every session: the grill,
-the spec, the tickets, all eight `/implement` runs and their reviewers. My token plan said
+the spec, the tickets, all nine `/implement` runs and their reviewers. My token plan said
 Sonnet 5.5 at medium for the tickets; I kept Opus on purpose, and the ledger shows it still
 fit (see the report).
 
